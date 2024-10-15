@@ -1,7 +1,13 @@
 package _4if.pld_agile_4if.models;
 
-import java.util.ArrayList;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@XmlRootElement(name = "reseau")
 public class CityMap {
 
     private ArrayList<Intersection> intersections;
@@ -9,6 +15,8 @@ public class CityMap {
     private Warehouse warehouse;
 
     // Constructor
+    public CityMap() {}
+
     public CityMap(ArrayList<Intersection> intersections, ArrayList<RoadSegment> roadSegments, Warehouse warehouse) {
         this.intersections = intersections;
         this.roadSegments = roadSegments;
@@ -16,6 +24,7 @@ public class CityMap {
     }
 
     // Getters and Setters
+    @XmlElement(name = "noeud")
     public ArrayList<Intersection> getIntersections() {
         return intersections;
     }
@@ -24,6 +33,7 @@ public class CityMap {
         this.intersections = intersections;
     }
 
+    @XmlElement(name = "troncon")
     public ArrayList<RoadSegment> getRoadSegments() {
         return roadSegments;
     }

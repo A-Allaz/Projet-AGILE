@@ -1,5 +1,9 @@
 package _4if.pld_agile_4if.models;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "noeud")
 public class Intersection {
 
     private int id;
@@ -7,6 +11,8 @@ public class Intersection {
     private double longitude;
 
     // Constructor
+    public Intersection() {}
+
     public Intersection(int id, double latitude, double longitude) {
         this.id = id;
         this.latitude = latitude;
@@ -14,6 +20,7 @@ public class Intersection {
     }
 
     // Getters and Setters
+    @XmlAttribute(name = "id")
     public int getId() {
         return id;
     }
@@ -22,6 +29,7 @@ public class Intersection {
         this.id = id;
     }
 
+    @XmlAttribute(name = "latitude")
     public double getLatitude() {
         return latitude;
     }
@@ -30,6 +38,7 @@ public class Intersection {
         this.latitude = latitude;
     }
 
+    @XmlAttribute(name = "longitude")
     public double getLongitude() {
         return longitude;
     }

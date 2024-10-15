@@ -1,18 +1,25 @@
 package _4if.pld_agile_4if.models;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.sql.Time;
 
+@XmlRootElement(name = "demandeDeLivraisons")
 public class Delivery {
 
-    private Location pickupLocation;
-    private Location deliveryLocation;
-    private Time pickupTime;
-    private Time deliveryTime;
+    private int pickupLocation;
+    private int deliveryLocation;
+    private int pickupTime;
+    private int deliveryTime;
     private Courier courier;
     private Route route;
 
     // Constructor
-    public Delivery(Location pickupLocation, Location deliveryLocation, Time pickupTime, Time deliveryTime, Courier courier, Route route) {
+    public Delivery() {}
+
+    public Delivery(int pickupLocation, int deliveryLocation, int pickupTime, int deliveryTime, Courier courier, Route route) {
         this.pickupLocation = pickupLocation;
         this.deliveryLocation = deliveryLocation;
         this.pickupTime = pickupTime;
@@ -22,35 +29,38 @@ public class Delivery {
     }
 
     // Getters and Setters
-    public Location getPickupLocation() {
+    @XmlAttribute(name = "adresseEnlevement")
+    public int getPickupLocation() {
         return pickupLocation;
     }
 
-    public void setPickupLocation(Location pickupLocation) {
+    public void setPickupLocation(int pickupLocation) {
         this.pickupLocation = pickupLocation;
     }
-
-    public Location getDeliveryLocation() {
+    @XmlAttribute(name = "adresseLivraison")
+    public int getDeliveryLocation() {
         return deliveryLocation;
     }
 
-    public void setDeliveryLocation(Location deliveryLocation) {
+    public void setDeliveryLocation(int deliveryLocation) {
         this.deliveryLocation = deliveryLocation;
     }
 
-    public Time getPickupTime() {
+    @XmlAttribute(name = "dureeEnlevement")
+    public int getPickupTime() {
         return pickupTime;
     }
 
-    public void setPickupTime(Time pickupTime) {
+    public void setPickupTime(int pickupTime) {
         this.pickupTime = pickupTime;
     }
 
-    public Time getDeliveryTime() {
+    @XmlAttribute(name = "dureeLivraison")
+    public int getDeliveryTime() {
         return deliveryTime;
     }
 
-    public void setDeliveryTime(Time deliveryTime) {
+    public void setDeliveryTime(int deliveryTime) {
         this.deliveryTime = deliveryTime;
     }
 

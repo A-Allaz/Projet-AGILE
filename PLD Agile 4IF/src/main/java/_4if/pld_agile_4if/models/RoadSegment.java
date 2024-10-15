@@ -1,14 +1,21 @@
 package _4if.pld_agile_4if.models;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "troncon")
 public class RoadSegment {
 
-    private Intersection origin;
-    private Intersection destination;
+    private int origin;
+    private int destination;
     private String name;
     private double length;
 
     // Constructor
-    public RoadSegment(Intersection origin, Intersection destination, String name, double length) {
+    public RoadSegment() {}
+
+    public RoadSegment(int origin, int destination, String name, double length) {
         this.origin = origin;
         this.destination = destination;
         this.name = name;
@@ -16,22 +23,25 @@ public class RoadSegment {
     }
 
     // Getters and Setters
-    public Intersection getOrigin() {
+    @XmlAttribute(name = "origine")
+    public int getOrigin() {
         return origin;
     }
 
-    public void setOrigin(Intersection origin) {
+    public void setOrigin(int origin) {
         this.origin = origin;
     }
 
-    public Intersection getDestination() {
+    @XmlAttribute(name = "destination")
+    public int getDestination() {
         return destination;
     }
 
-    public void setDestination(Intersection destination) {
+    public void setDestination(int destination) {
         this.destination = destination;
     }
 
+    @XmlAttribute(name = "nomRue")
     public String getName() {
         return name;
     }
@@ -40,6 +50,7 @@ public class RoadSegment {
         this.name = name;
     }
 
+    @XmlAttribute(name = "longueur")
     public double getLength() {
         return length;
     }

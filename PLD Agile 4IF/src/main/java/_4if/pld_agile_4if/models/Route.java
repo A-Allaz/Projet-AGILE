@@ -4,19 +4,19 @@ import java.util.ArrayList;
 
 public class Route {
 
-    private ArrayList<Location> stopPoints;
+    private ArrayList<RoadSegment> stopPoints;
 
     // Constructor
-    public Route(ArrayList<Location> stopPoints) {
+    public Route(ArrayList<RoadSegment> stopPoints) {
         this.stopPoints = stopPoints;
     }
 
     // Getters and Setters
-    public ArrayList<Location> getStopPoints() {
+    public ArrayList<RoadSegment> getStopPoints() {
         return stopPoints;
     }
 
-    public void setStopPoints(ArrayList<Location> stopPoints) {
+    public void setStopPoints(ArrayList<RoadSegment> stopPoints) {
         this.stopPoints = stopPoints;
     }
 
