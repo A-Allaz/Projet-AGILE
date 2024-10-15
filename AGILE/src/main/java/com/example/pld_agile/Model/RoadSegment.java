@@ -22,7 +22,7 @@ public class RoadSegment {
         return length;
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "longueur")
     public void setLength(double length) {
         this.length = length;
     }
@@ -40,8 +40,18 @@ public class RoadSegment {
         return origin;
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "origine")
     public void setOrigin(long origin) {
         this.origin = origin;
+    }
+
+    @Override
+    public String toString() {
+        return "RoadSegment{" +
+                "destination=" + destination +
+                ", length=" + length +
+                ", streetName='" + streetName + '\'' +
+                ", origin=" + origin +
+                '}';
     }
 }
