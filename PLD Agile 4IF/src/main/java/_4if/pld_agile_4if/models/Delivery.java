@@ -5,10 +5,13 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 import java.sql.Time;
+import java.util.concurrent.atomic.AtomicLong;
 
 @XmlRootElement(name = "demandeDeLivraisons")
 public class Delivery {
 
+    private static final AtomicLong idGenerator = new AtomicLong(0);
+    private long id;  // Nouvel attribut ID généré automatiquement
     private long pickupLocation;
     private long deliveryLocation;
     private int pickupTime;
@@ -17,9 +20,12 @@ public class Delivery {
     private Route route;
 
     // Constructor
-    public Delivery() {}
+    public Delivery() {
+        this.id = idGenerator.incrementAndGet();  // Générer un ID unique
+    }
 
     public Delivery(long pickupLocation, long deliveryLocation, int pickupTime, int deliveryTime, Courier courier, Route route) {
+        this.id = idGenerator.incrementAndGet();  // Générer un ID unique
         this.pickupLocation = pickupLocation;
         this.deliveryLocation = deliveryLocation;
         this.pickupTime = pickupTime;
@@ -29,6 +35,10 @@ public class Delivery {
     }
 
     // Getters and Setters
+    public long getId() {
+        return id;
+    }
+
     @XmlAttribute(name = "adresseEnlevement")
     public long getPickupLocation() {
         return pickupLocation;
@@ -83,7 +93,8 @@ public class Delivery {
     @Override
     public String toString() {
         return "Delivery{" +
-                "pickupLocation=" + pickupLocation +
+                "id=" + id +
+                ", pickupLocation=" + pickupLocation +
                 ", deliveryLocation=" + deliveryLocation +
                 ", pickupTime=" + pickupTime +
                 ", deliveryTime=" + deliveryTime +

@@ -1,55 +1,50 @@
 package _4if.pld_agile_4if.models;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
+
+import java.time.LocalTime;
+
 public class Warehouse {
 
     // Attributes
-    private long id;
-    private double latitude;
-    private double longitude;
+    private long address; // Correspond à l'id de l'intersection
+    private LocalTime departureTime;
 
-    // Constructor with parameters
-    public Warehouse(long id, double latitude, double longitude) {
-        this.id = id;
-        this.latitude = latitude;
-        this.longitude = longitude;
+
+    // Constructeur
+    public Warehouse(long address, LocalTime departureTime) {
+        this.address = address;
+        this.departureTime = departureTime;
     }
 
     // Default constructor (optional, for use by frameworks like JAXB)
     public Warehouse() {
     }
 
-    // Getters and Setters
-    public long getId() {
-        return id;
+    // Getters
+    public long getAddress() {
+        return address;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public LocalTime getDepartureTime() {
+        return departureTime;
     }
 
-    public double getLatitude() {
-        return latitude;
+    // Setters
+    public void setAddress(long address) {
+        this.address = address;
     }
 
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
+    public void setDepartureTime(LocalTime departureTime) {
+        this.departureTime = departureTime;
     }
 
     // toString method (optional, for logging or debugging)
     @Override
     public String toString() {
         return "Warehouse{" +
-                "id=" + id +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
+                "adress=" + address +
+                ", departureTime=" + departureTime +
                 '}';
     }
 }

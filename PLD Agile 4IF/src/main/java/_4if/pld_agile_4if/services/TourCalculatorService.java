@@ -4,16 +4,18 @@ import _4if.pld_agile_4if.models.CityMap;
 import _4if.pld_agile_4if.models.Delivery;
 import _4if.pld_agile_4if.models.Intersection;
 import _4if.pld_agile_4if.models.RoadSegment;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Service
 public class TourCalculatorService {
 
     // Méthode principale pour calculer le meilleur tour
-    public List<Long> calculateOptimalTour(CityMap cityMap, List<Delivery> deliveries, long warehouseId) {
+    public List<RoadSegment> calculateOptimalTour(CityMap cityMap, List<Delivery> deliveries, long warehouseId) {
         // Étape 1: Identifier tous les points d'intérêt (entrepôt, points de pickup et livraison)
         Set<Long> pointsOfInterest = new HashSet<>();
-        pointsOfInterest.add(cityMap.getWarehouse().getId()); // Ajout de l'entrepôt
+        pointsOfInterest.add(cityMap.getWarehouse().getAddress()); // Ajout de l'entrepôt
 
         // Ajout des points pickup et delivery
         for (Delivery delivery : deliveries) {
@@ -30,7 +32,10 @@ public class TourCalculatorService {
         // Étape 4: Résoudre le problème en suivant la contrainte de visite des pickups avant les livraisons
         List<Long> optimalTour = findBestTour(completeSubGraph, deliveries, warehouseId);
 
-        return optimalTour;
+        // Étape 5: Retrouver le chemin complet entre chaque points du programme de livraison
+        List<RoadSegment> completeDeliveryPath = getCompletePath(cityMap, optimalTour);
+
+        return completeDeliveryPath;
     }
 
     // Méthode pour calculer les plus courts chemins à partir de chaque point d'intérêt
@@ -61,10 +66,6 @@ public class TourCalculatorService {
         while(!pq.isEmpty()) {
             IntersectionDistance current = pq.poll();
             long currentIntersectionId = current.getIntersectionId();
-
-            System.out.println("----------------------------------------------------");
-            System.out.println(cityMap.getOutGoingRoadSegments(currentIntersectionId));
-            System.out.println("----------------------------------------------------");
 
             for(RoadSegment segment : cityMap.getOutGoingRoadSegments(currentIntersectionId)) {
                 long neighbour = segment.getDestination();
@@ -165,6 +166,84 @@ public class TourCalculatorService {
             }
         }
     }
+
+    public List<RoadSegment> getCompletePath(CityMap cityMap, List<Long> tour) {
+        List<RoadSegment> completePath = new ArrayList<>();
+
+        // Parcourir les paires consécutives de points d'intérêt dans le tour
+        for (int i = 0; i < tour.size() - 1; i++) {
+            long start = tour.get(i);
+            long destination = tour.get(i + 1);
+
+            // Utiliser Dijkstra pour obtenir les segments de route entre start et destination
+            List<RoadSegment> pathBetween = dijkstraPath(cityMap, start, destination);
+
+            // Ajouter tous les segments du chemin au chemin complet
+            completePath.addAll(pathBetween);
+        }
+
+        return completePath; // Retourner la liste complète des segments de route
+    }
+
+    private List<RoadSegment> dijkstraPath(CityMap cityMap, long source, long destination) {
+        // Map pour garder la distance minimum depuis la source
+        Map<Long, Double> distances = new HashMap<>();
+        // Map pour garder l'ID de la précédente intersection
+        Map<Long, Long> previous = new HashMap<>();
+        // Map pour associer chaque intersection au segment de route emprunté
+        Map<Long, RoadSegment> roadMap = new HashMap<>();
+
+        PriorityQueue<IntersectionDistance> pq = new PriorityQueue<>(Comparator.comparingDouble(IntersectionDistance::getDistance));
+
+        // Initialisation : on met toutes les distances à l'infini sauf la source
+        for (Intersection intersection : cityMap.getIntersections()) {
+            distances.put(intersection.getId(), Double.MAX_VALUE);
+        }
+        distances.put(source, 0.0);
+        pq.add(new IntersectionDistance(source, 0));
+
+        // Dijkstra
+        while (!pq.isEmpty()) {
+            IntersectionDistance current = pq.poll();
+            long currentIntersectionId = current.getIntersectionId();
+
+            // Si on atteint la destination, on peut arrêter
+            if (currentIntersectionId == destination) {
+                break;
+            }
+
+            // Parcourir tous les segments partant de l'intersection actuelle
+            for (RoadSegment segment : cityMap.getOutGoingRoadSegments(currentIntersectionId)) {
+                long neighbour = segment.getDestination();
+                double newDistance = distances.get(currentIntersectionId) + segment.getLength();
+
+                // Mise à jour si un chemin plus court est trouvé
+                if (newDistance < distances.get(neighbour)) {
+                    distances.put(neighbour, newDistance);
+                    pq.add(new IntersectionDistance(neighbour, newDistance));
+                    previous.put(neighbour, currentIntersectionId);
+                    roadMap.put(neighbour, segment);  // Garder le segment de route utilisé
+                }
+            }
+        }
+
+        // Reconstruire le chemin à partir des intersections visitées (backtracking)
+        List<RoadSegment> path = new ArrayList<>();
+        Long currentNode = destination;
+        while (previous.containsKey(currentNode)) {
+            RoadSegment segment = roadMap.get(currentNode);
+            path.add(0, segment);  // Ajouter le segment dans l'ordre inverse
+            currentNode = previous.get(currentNode);  // Remonter au précédent
+        }
+
+        // Si on n'a pas trouvé de chemin, on renvoie une exception
+        if (path.isEmpty()) {
+            throw new IllegalStateException("Aucun chemin trouvé entre " + source + " et " + destination);
+        }
+
+        return path;
+    }
+
 
 
     // Classe pour gérer la priorité dans la file d'attente
