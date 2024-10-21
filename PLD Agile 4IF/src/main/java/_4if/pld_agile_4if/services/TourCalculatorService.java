@@ -9,81 +9,156 @@ import java.util.*;
 
 class TourCalculatorService {
 
-    public Map<Integer, Map<Integer, Double>> computeShortestPaths(CityMap cityMap, List<Delivery> deliveries) {
-        // On extrait les points d'intérêt (pickup et delivery points) en utilisant les IDs d'intersections
+    // Méthode principale pour calculer le meilleur tour
+    public List<Integer> calculateOptimalTour(CityMap cityMap, List<Delivery> deliveries, int warehouseId) {
+        // Étape 1: Identifier tous les points d'intérêt (entrepôt, points de pickup et livraison)
         Set<Integer> pointsOfInterest = new HashSet<>();
+        pointsOfInterest.add(cityMap.getWarehouse().getId()); // Ajout de l'entrepôt
 
-        // Ajouter les points de pickup et delivery dans le set des points d'intérêt
+        // Ajout des points pickup et delivery
         for (Delivery delivery : deliveries) {
-            pointsOfInterest.add(delivery.getPickupLocation());   // ID de l'intersection de pickup
-            pointsOfInterest.add(delivery.getDeliveryLocation()); // ID de l'intersection de delivery
+            pointsOfInterest.add(delivery.getPickupLocation());
+            pointsOfInterest.add(delivery.getDeliveryLocation());
         }
 
-        // On va construire un sous-graphe complet où chaque sommet est un pickup ou un delivery
-        Map<Integer, Map<Integer, Double>> completeSubGraph = new HashMap<>();
+        // Étape 2: Calculer les plus courts chemins entre chaque paire de points d'intérêt
+        Map<Integer, Map<Integer, Double>> shortestPaths = computeShortestPaths(cityMap, pointsOfInterest);
 
-        // Pour chaque point d'intérêt (ID d'intersection), on exécute Dijkstra pour trouver les plus courts chemins
-        for (int sourceId : pointsOfInterest) {
-            // Calculer les plus courts chemins à partir de l'ID source
-            Map<Integer, Double> shortestPathsFromSource = dijkstra(cityMap, sourceId);
+        // Étape 3: Construire un sous-graphe complet entre les points d'intérêt
+        Map<Integer, Map<Integer, Double>> completeSubGraph = buildCompleteSubGraph(shortestPaths, pointsOfInterest);
 
-            // On filtre les résultats pour ne conserver que les chemins vers les autres points d'intérêt
-            Map<Integer, Double> filteredPaths = new HashMap<>();
-            for (int destinationId : pointsOfInterest) {
-                // Ne pas inclure le chemin vers soi-même
-                if (sourceId != destinationId) {
-                    filteredPaths.put(destinationId, shortestPathsFromSource.get(destinationId));
-                }
-            }
+        // Étape 4: Résoudre le problème en suivant la contrainte de visite des pickups avant les livraisons
+        List<Integer> optimalTour = findBestTour(completeSubGraph, deliveries, warehouseId);
 
-            // Ajouter les chemins les plus courts à partir du point source au sous-graphe complet
-            completeSubGraph.put(sourceId, filteredPaths);
-        }
-
-        return completeSubGraph;
+        return optimalTour;
     }
 
+    // Méthode pour calculer les plus courts chemins à partir de chaque point d'intérêt
+    private Map<Integer, Map<Integer,Double>> computeShortestPaths(CityMap cityMap, Set<Integer> pointsOfInterest) {
+        Map<Integer, Map<Integer,Double>> shortestPaths = new HashMap<>();
 
-    private Map<Integer, Double> dijkstra(CityMap cityMap, int sourceId) {
-        // Utilisation d'une Map pour stocker les distances minimales à partir du point source
+        for(Integer point : pointsOfInterest) {
+            shortestPaths.put(point, dijkstra(cityMap, point));
+        }
+
+        return shortestPaths;
+    }
+
+    // Algorithme de Dijkstra pour calculer les plus courts chemins à partir d'une intersection source
+    private Map<Integer, Double> dijkstra(CityMap cityMap, int source) {
         Map<Integer, Double> distances = new HashMap<>();
-        // Map pour stocker le nœud précédent dans le chemin le plus court (facultatif si vous n'avez pas besoin des chemins)
-        Map<Integer, Integer> previous = new HashMap<>();
-        // PriorityQueue pour choisir l'intersection avec la plus petite distance lors de l'exploration
+
         PriorityQueue<IntersectionDistance> pq = new PriorityQueue<>(Comparator.comparingDouble(IntersectionDistance::getDistance));
 
-        // Initialisation : on met toutes les distances à l'infini sauf celle du point source
-        for (Intersection intersection : cityMap.getIntersections()) {
+        //Initialisation : on met toutes les distances à l'infini sauf la source
+        for(Intersection intersection : cityMap.getIntersections()) {
             distances.put(intersection.getId(), Double.MAX_VALUE);
         }
-        distances.put(sourceId, 0.0);
-        pq.add(new IntersectionDistance(sourceId, 0.0));
+        distances.put(source, 0.0);
+        pq.add(new IntersectionDistance(source, 0));
 
-        // Algorithme de Dijkstra
-        while (!pq.isEmpty()) {
-            // On prend l'intersection avec la plus petite distance actuelle
+        //Dijkstra
+        while(!pq.isEmpty()) {
             IntersectionDistance current = pq.poll();
-            int currentId = current.getIntersectionId();  // Nous travaillons maintenant avec les IDs d'intersection
-
-            /*
-            // Parcourir tous les segments de route partant de cette intersection
-            for (RoadSegment segment : cityMap.getOutgoingRoadSegments(currentId)) {
-                int neighborId = segment.getDestination(); // ID de l'intersection de destination
-
-                // Calcul de la nouvelle distance pour atteindre le voisin via ce segment
-                double newDist = distances.get(currentId) + segment.getLength();
-                if (newDist < distances.get(neighborId)) {
-                    // Mise à jour de la distance minimale si on a trouvé un chemin plus court
-                    distances.put(neighborId, newDist);
-                    pq.add(new IntersectionDistance(neighborId, newDist));
-                    previous.put(neighborId, currentId); // Optionnel : utile pour reconstruire le chemin si nécessaire
+            int currentIntersectionId = current.getIntersectionId();
+            for(RoadSegment segment : cityMap.getOutGoingRoadSegments(currentIntersectionId)) {
+                int neighbour = segment.getDestination();
+                double newDistance = distances.get(currentIntersectionId) + segment.getLength();
+                if(newDistance < distances.get(neighbour)) {
+                    distances.put(neighbour, newDistance);
+                    pq.add(new IntersectionDistance(neighbour, newDistance));
                 }
             }
-            */
+        }
+        return distances;
+    }
+
+    // Méthode pour construire un sous-graphe complet entre les points d'intérêt
+    private Map<Integer, Map<Integer, Double>> buildCompleteSubGraph(Map<Integer, Map<Integer,Double>> shortestPaths, Set<Integer> pointsOfInterest) {
+        Map<Integer, Map<Integer, Double>> subGraph = new HashMap<>();
+
+        // Pour chaque point d'intérêt 'source', on va filtrer les chemins qui mènent aux autres points d'intérêt
+        for(Integer source : pointsOfInterest) {
+            Map<Integer, Double> filteredPaths = new HashMap<>();
+
+            // On parcourt à nouveau tous les points d'intérêt, cette fois-ci pour les destinations
+            for(Integer destination : pointsOfInterest) {
+                if(!source.equals(destination)) {
+                    filteredPaths.put(destination, shortestPaths.get(source).get(destination));
+                }
+            }
+            subGraph.put(source, filteredPaths);
+        }
+        // Le sous-graphe complet est retourné : il contient les distances entre chaque paire de points d'intérêt
+        return subGraph;
+        //GABODI GABODA
+    }
+
+    // Méthode pour trouver le meilleur tour tout en respectant les contraintes de pickup avant livraison
+    private List<Integer> findBestTour(Map<Integer, Map<Integer, Double>> completeSubGraph, List<Delivery> deliveries, int wareHouseId) {
+        List<Integer> tour = new ArrayList<>();
+        Set<Integer> visitedPickups = new HashSet<>();
+        Set<Integer> visitedDeliveries = new HashSet<>();
+        int currentLocation = wareHouseId;
+
+        tour.add(currentLocation);
+
+        while(visitedDeliveries.size() < deliveries.size()) {
+            //Chercher le prochain point à visiter en respectant les contraintes
+            int nextLocation = findNextLocation(completeSubGraph, currentLocation, deliveries, visitedPickups, visitedDeliveries);
+            tour.add(nextLocation);
+
+            //Marquer le point comme visité (pickup ou delivery)
+            markVisited(nextLocation, deliveries, visitedPickups, visitedDeliveries);
+            currentLocation = nextLocation;
         }
 
-        // Retourner les distances minimales depuis le point source vers toutes les autres intersections
-        return distances;
+        //Retourner à l'entrepôt
+        tour.add(wareHouseId);
+        return tour;
+    }
+
+    // Chercher le prochain point à visiter en respectant les contraintes de pickup et de livraison
+    private int findNextLocation(Map<Integer, Map<Integer, Double>> subGraph, int currentLocation, List<Delivery> deliveries, Set<Integer> visitedPickups, Set<Integer> visitedDeliveries) {
+        Integer nextLocation = -1; // Initialisation de la prochaine destination
+        Double shortestDistance = Double.MAX_VALUE; // La distance la plus courte sera mise à jour au fur et à mesure
+
+        // Parcourir les livraisons pour trouver la prochaine destination valide (pickup ou livraison)
+        for (Delivery delivery : deliveries) {
+            int pickupLocation = delivery.getPickupLocation();
+            int deliveryLocation = delivery.getDeliveryLocation();
+
+            // Si le pickup n'a pas encore été visité, on considère cette option
+            if (!visitedPickups.contains(pickupLocation)) {
+                Double distanceToPickup = subGraph.get(currentLocation).get(pickupLocation);
+                if (distanceToPickup != null && distanceToPickup < shortestDistance) {
+                    nextLocation = pickupLocation; // On choisit ce pickup
+                    shortestDistance = distanceToPickup; // On met à jour la distance minimale
+                }
+            }
+            // Si le pickup a été visité mais pas encore la livraison, on considère cette livraison
+            else if (!visitedDeliveries.contains(deliveryLocation)) {
+                Double distanceToDelivery = subGraph.get(currentLocation).get(deliveryLocation);
+                if (distanceToDelivery != null && distanceToDelivery < shortestDistance) {
+                    nextLocation = deliveryLocation; // On choisit cette livraison
+                    shortestDistance = distanceToDelivery; // On met à jour la distance minimale
+                }
+            }
+        }
+
+        // Retourner la prochaine destination trouvée (ou -1 si quelque chose se passe mal, mais cela ne devrait jamais arriver)
+        return nextLocation != null ? nextLocation : -1;
+    }
+
+    private void markVisited(int location, List<Delivery> deliveries, Set<Integer> visitedPickups, Set<Integer> visitedDeliveries) {
+        for(Delivery delivery : deliveries) {
+            if(delivery.getPickupLocation() == location) {
+                visitedPickups.add(location);
+            }
+            else if(delivery.getDeliveryLocation() == location) {
+                visitedDeliveries.add(location);
+            }
+        }
     }
 
 

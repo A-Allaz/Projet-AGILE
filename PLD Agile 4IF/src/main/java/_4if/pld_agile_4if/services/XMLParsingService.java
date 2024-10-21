@@ -40,6 +40,8 @@ public class XMLParsingService {
             JAXBContext jaxbContext = JAXBContext.newInstance(Delivery.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 
+            //NE PAS OUBLIER D'AJOUTER LA WAREHOUSE
+
             // Créer un XMLStreamReader pour parcourir les éléments XML
             XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
             XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(new java.io.FileInputStream(xmlFile));
