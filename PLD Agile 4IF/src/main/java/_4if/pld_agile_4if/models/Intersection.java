@@ -6,14 +6,14 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "noeud")
 public class Intersection {
 
-    private int id;
+    private long id;
     private double latitude;
     private double longitude;
 
     // Constructor
     public Intersection() {}
 
-    public Intersection(int id, double latitude, double longitude) {
+    public Intersection(long id, double latitude, double longitude) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -21,11 +21,11 @@ public class Intersection {
 
     // Getters and Setters
     @XmlAttribute(name = "id")
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

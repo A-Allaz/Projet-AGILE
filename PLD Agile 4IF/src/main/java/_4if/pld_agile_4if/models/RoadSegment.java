@@ -7,15 +7,15 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "troncon")
 public class RoadSegment {
 
-    private int origin;
-    private int destination;
+    private long origin;
+    private long destination;
     private String name;
     private double length;
 
     // Constructor
     public RoadSegment() {}
 
-    public RoadSegment(int origin, int destination, String name, double length) {
+    public RoadSegment(long origin, long destination, String name, double length) {
         this.origin = origin;
         this.destination = destination;
         this.name = name;
@@ -24,20 +24,20 @@ public class RoadSegment {
 
     // Getters and Setters
     @XmlAttribute(name = "origine")
-    public int getOrigin() {
+    public long getOrigin() {
         return origin;
     }
 
-    public void setOrigin(int origin) {
+    public void setOrigin(long origin) {
         this.origin = origin;
     }
 
     @XmlAttribute(name = "destination")
-    public int getDestination() {
+    public long getDestination() {
         return destination;
     }
 
-    public void setDestination(int destination) {
+    public void setDestination(long destination) {
         this.destination = destination;
     }
 

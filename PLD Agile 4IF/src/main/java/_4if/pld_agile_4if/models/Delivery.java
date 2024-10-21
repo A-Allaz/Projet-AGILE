@@ -9,8 +9,8 @@ import java.sql.Time;
 @XmlRootElement(name = "demandeDeLivraisons")
 public class Delivery {
 
-    private int pickupLocation;
-    private int deliveryLocation;
+    private long pickupLocation;
+    private long deliveryLocation;
     private int pickupTime;
     private int deliveryTime;
     private Courier courier;
@@ -19,7 +19,7 @@ public class Delivery {
     // Constructor
     public Delivery() {}
 
-    public Delivery(int pickupLocation, int deliveryLocation, int pickupTime, int deliveryTime, Courier courier, Route route) {
+    public Delivery(long pickupLocation, long deliveryLocation, int pickupTime, int deliveryTime, Courier courier, Route route) {
         this.pickupLocation = pickupLocation;
         this.deliveryLocation = deliveryLocation;
         this.pickupTime = pickupTime;
@@ -30,19 +30,19 @@ public class Delivery {
 
     // Getters and Setters
     @XmlAttribute(name = "adresseEnlevement")
-    public int getPickupLocation() {
+    public long getPickupLocation() {
         return pickupLocation;
     }
 
-    public void setPickupLocation(int pickupLocation) {
+    public void setPickupLocation(long pickupLocation) {
         this.pickupLocation = pickupLocation;
     }
     @XmlAttribute(name = "adresseLivraison")
-    public int getDeliveryLocation() {
+    public long getDeliveryLocation() {
         return deliveryLocation;
     }
 
-    public void setDeliveryLocation(int deliveryLocation) {
+    public void setDeliveryLocation(long deliveryLocation) {
         this.deliveryLocation = deliveryLocation;
     }
 

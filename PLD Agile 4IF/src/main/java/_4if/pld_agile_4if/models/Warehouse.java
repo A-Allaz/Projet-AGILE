@@ -3,12 +3,12 @@ package _4if.pld_agile_4if.models;
 public class Warehouse {
 
     // Attributes
-    private int id;
+    private long id;
     private double latitude;
     private double longitude;
 
     // Constructor with parameters
-    public Warehouse(int id, double latitude, double longitude) {
+    public Warehouse(long id, double latitude, double longitude) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -19,11 +19,11 @@ public class Warehouse {
     }
 
     // Getters and Setters
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

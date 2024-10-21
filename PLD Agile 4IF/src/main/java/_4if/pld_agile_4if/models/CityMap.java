@@ -38,7 +38,7 @@ public class CityMap {
         return roadSegments;
     }
 
-    public ArrayList<RoadSegment> getOutGoingRoadSegments(int source) {
+    public ArrayList<RoadSegment> getOutGoingRoadSegments(long source) {
         ArrayList<RoadSegment> outgoing = new ArrayList<>();
         for (RoadSegment roadSegment : this.getRoadSegments()) {
             if ( roadSegment.getOrigin() == source ) {
