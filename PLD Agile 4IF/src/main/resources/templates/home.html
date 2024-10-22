@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Home</title>
+        <link th:href="@{/css/home.css}" rel="stylesheet" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script th:src="@{/js/home.js}"></script>
+        <script th:src="@{/js/map.js}"></script>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        <style>
+            #map {
+                height: 100%;
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="leftBlock">
+            <div class="tourFileInputContainer">
+                <input type="file" style="display: none;" id="tourFileInput" accept=".xml" onchange="updateFileName('tourFileInput', 'tourFileTitle')">
+                <button onclick="document.getElementById('tourFileInput').click();" class="tourFileInputButton">Import .xml delivery tour file</button>
+                <text id="tourFileTitle" style="margin-top: 2%;">Select a file</text>
+            </div>
+            <div class="deliveriesListBox"></div>
+            <div class="newDeliveryBox">
+                <button class="locationButton" style="margin-left: 5%;">Add pickup location</button>
+                <button class="locationButton" style="margin-left: 10%;">Add delivery location</button>
+                <input type="text" class="timeInput" style="margin-left: 5%;" placeholder="Pickup time:">
+                <input type="text" class="timeInput" style="margin-left: 10%;" placeholder="Delivery time:">
+                <button class="addButton">Add delivery</button>
+            </div>
+        </div>
+        <div class="mapBlock" id="mapContainer">
+            <input type="file" style="display: none;" id="mapFileInput" accept=".xml" onchange="updateFileName('mapFileInput', 'mapFileTitle', 'confirmMapButton')">
+            <button id="mapFileButton" onclick="document.getElementById('mapFileInput').click();" class="mapButton">Import .xml delivery map file</button>
+            <text id="mapFileTitle" style="margin-top: 2%;">Select a file</text>
+            <button id="confirmMapButton" class="confirmButton" onclick="displayMap('mapContainer', ['mapFileButton', 'mapFileTitle', 'confirmMapButton'])">Confirm</button>
+        </div>
+        <div class="tourTime">
+            <t class="tourTimeText">Estimated tour time :</t>
+            <t class="tourTimeText">--:--</t>
+        </div>
+        <div class="rightBlock">
+            <div class="stopListBox"></div>
+        </div>
+
+    </body>
+</html>
