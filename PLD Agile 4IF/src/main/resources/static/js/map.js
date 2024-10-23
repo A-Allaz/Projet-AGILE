@@ -1,34 +1,29 @@
 var nodes, roadSegments, map;
 
-async function loadJSON(url) {
-    try {
-        const response = await fetch(url);
-        return await response.json();
-    } catch (error) {
-        console.error('Error loading JSON file:', error);
-        throw error;
-    }
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function loadData() {
     try {
-        const response = await fetch('/mapData');
-        console.log(response)
+        await sleep(3000); // Simulate a delay
 
+        const response = await fetch('/mapData');
         if (!response.ok) {
             throw new Error('Network response was not ok: ' + response.statusText);
         }
 
-        const data = await response.json();
+        const data = await response.json(); // Data contains both nodes and roadSegments
+        console.log('Data loaded:', data);
 
-        if (data.error) {
-            console.error('Error:', data.error);
-            return;
-        }
+        // Extract nodes and road segments from the JSON object
+        nodes = data.node; // Assuming the 'node' key contains an array of node objects
+        roadSegments = data.roadSegment; // Assuming 'roadSegment' contains an array of road segments
 
-        nodes = data.nodes;
-        roadSegments = data.roadSegments;
+        console.log('Nodes:', nodes);
+        console.log('Road Segments:', roadSegments);
 
+        // Plot the data on the map
         plotNodes(nodes);
         plotRoadSegments(roadSegments);
 
@@ -45,33 +40,34 @@ function checkAndPlotSegments() {
     }
 }
 
+// Plot the nodes on the map
 function plotNodes(nodes) {
-    for (var nodeId in nodes) {
-        var node = nodes[nodeId];
-        L.circleMarker([node.lat, node.lon], {
+    nodes.forEach(node => {
+        L.circleMarker([node.latitude, node.longitude], {
             radius: 2,
             color: 'black',
             fillColor: 'black',
             fillOpacity: 1
-        }).addTo(map)
-    }
+        }).addTo(map);
+    });
 }
 
+// Plot the road segments on the map
 function plotRoadSegments(roadSegments) {
     roadSegments.forEach(function(segment) {
-        var originNode = nodes[segment.origine]
-        var destinationNode = nodes[segment.destination]
+        const originNode = nodes.find(node => node.id === segment.origin);
+        const destinationNode = nodes.find(node => node.id === segment.destination);
 
         if (originNode && destinationNode) {
             L.polyline([
-                [originNode.lat, originNode.lon],
-                [destinationNode.lat, destinationNode.lon]
+                [originNode.latitude, originNode.longitude],
+                [destinationNode.latitude, destinationNode.longitude]
             ], {
                 color: "rgb(70, 70, 70)",
                 weight: 3
-            }).addTo(map)
+            }).addTo(map);
         }
-    })
+    });
 }
 
 function fitMap(nodes) {
@@ -80,10 +76,10 @@ function fitMap(nodes) {
 
     for(var nodeId in nodes){
         var node = nodes[nodeId];
-        node.lat > northeast.lat ? northeast.lat = node.lat : null;
-        node.lon > northeast.lon ? northeast.lon = node.lon : null;
-        node.lat < southwest.lat ? southwest.lat = node.lat : null;
-        node.lon < southwest.lon ? southwest.lon = node.lon : null;
+        node.latitude > northeast.lat ? northeast.lat = node.latitude : null;
+        node.longitude > northeast.lon ? northeast.lon = node.longitude : null;
+        node.latitude < southwest.lat ? southwest.lat = node.latitude : null;
+        node.longitude < southwest.lon ? southwest.lon = node.longitude : null;
     } 
 
     var center = [(northeast.lat + southwest.lat) / 2, (northeast.lon + southwest.lon) / 2]

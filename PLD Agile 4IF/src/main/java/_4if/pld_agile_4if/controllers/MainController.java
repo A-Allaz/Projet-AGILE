@@ -40,7 +40,6 @@ public class MainController {
 
             // Parser le fichier XML et stocker le CityMap
             cityMap = xmlParsingService.parseCityMap(tempFile);
-            System.out.println(cityMap);
             return "City map uploaded successfully!";
         } catch (Exception e) {
             e.printStackTrace();
