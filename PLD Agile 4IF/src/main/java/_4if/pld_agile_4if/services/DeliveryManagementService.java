@@ -9,11 +9,12 @@ import java.util.List;
 
 @Service
 public class DeliveryManagementService {
-
-    private List<Delivery> deliveries = new ArrayList<>();
+    private List<Delivery> deliveries;
+    private List<RoadSegment> optimalTour;
     private final TourCalculatorService tourCalculatorService;
     private CityMap cityMap; // The current city map
     private long warehouseId; // The warehouse ID
+
 
     // Constructor that injects the TourCalculatorService and initializes with the city map and warehouse ID
     public DeliveryManagementService(TourCalculatorService tourCalculatorService) {
@@ -24,6 +25,29 @@ public class DeliveryManagementService {
     public void initializeCityMap(CityMap cityMap, long warehouseId) {
         this.cityMap = cityMap;
         this.warehouseId = warehouseId;
+    }
+
+    // Stock a list of deliveries from a XML file
+    public void addDeliveryProgram(List<Delivery> deliveryProgram){
+        if (deliveries.isEmpty())
+        {
+            deliveries = deliveryProgram;
+        }
+        else {
+            deliveries.addAll(deliveryProgram);
+        }
+        recalculateTour();
+    }
+
+    // Collect and stock the deliveries assigned to a courier
+    public void loadDeliveries(Courier selectedCourier){
+        deliveries = selectedCourier.getAssignedDeliveries();
+    }
+
+   public void assignCourier(Courier courier, Delivery delivery){
+        courier.addDelivery(delivery);
+        loadDeliveries(courier);
+        recalculateTour();
     }
 
     // Add a new delivery
@@ -55,7 +79,7 @@ public class DeliveryManagementService {
     // Recalculate the optimal tour based on the updated delivery list
     private void recalculateTour() {
         if (cityMap != null && !deliveries.isEmpty()) {
-            List<RoadSegment> optimalTour = tourCalculatorService.calculateOptimalTour(cityMap, deliveries, warehouseId);
+            this.optimalTour = tourCalculatorService.calculateOptimalTour(cityMap, deliveries, warehouseId);
             // Here you can handle the result, for example, updating the UI or storing the tour
             System.out.println("Optimal tour recalculated: " + optimalTour);
         }
