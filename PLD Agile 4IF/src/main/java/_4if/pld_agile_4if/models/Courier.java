@@ -50,6 +50,10 @@ public class Courier {
         this.currentRoute = currentRoute;
     }
 
+    public void addDelivery(Delivery delivery) {
+        this.assignedDeliveries.add(delivery);
+    }
+
     @Override
     public String toString() {
         return "Courier{" +
