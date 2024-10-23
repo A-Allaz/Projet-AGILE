@@ -13,6 +13,7 @@ async function loadJSON(url) {
 async function loadData() {
     try {
         const response = await fetch('/mapData');
+        console.log(response)
 
         if (!response.ok) {
             throw new Error('Network response was not ok: ' + response.statusText);
@@ -92,7 +93,15 @@ function fitMap(nodes) {
     return {center: center, zoom: zoom};
 }
 
-function displayMap(mapFile, mapContainerId, toHideElementsIds) {
+function displayMap(fileInputId, mapContainerId, toHideElementsIds) {
+
+    const fileInput = document.getElementById(fileInputId)
+    const mapFile = (fileInput.files)[0]
+
+    console.log(mapFile)
+
+    sendFileToServer(mapFile, '/uploadMap')
+
     map = L.map(mapContainerId)
 
     for(const elementId of toHideElementsIds){
@@ -119,17 +128,6 @@ function displayMap(mapFile, mapContainerId, toHideElementsIds) {
     console.log(zoom); 
     map.setView(center, zoom)
 }
-
-document.getElementById('confirmMapButton').addEventListener('click', function () {
-    const input = document.getElementById('mapFileInput');
-    if (input.files.length > 0) {
-        const file = input.files[0];
-        console.log('Selected file:', file);
-        sendFileToServer(file, '/uploadMap');
-    } else {
-        alert("No file selected");
-    }
-});
 
 function sendFileToServer(file, uploadUrl) {
     const formData = new FormData();

@@ -37,7 +37,7 @@
             <input type="file" style="display: none;" id="mapFileInput" accept=".xml" onchange="updateFileName('mapFileInput', 'mapFileTitle', 'confirmMapButton')">
             <button id="mapFileButton" onclick="document.getElementById('mapFileInput').click();" class="mapButton">Import .xml delivery map file</button>
             <text id="mapFileTitle" style="margin-top: 2%;">Select a file</text>
-            <button id="confirmMapButton" class="confirmButton" onclick="displayMap('mapContainer', ['mapFileButton', 'mapFileTitle', 'confirmMapButton'])">Confirm</button>
+            <button id="confirmMapButton" class="confirmButton" onclick="displayMap('mapFileInput', 'mapContainer', ['mapFileButton', 'mapFileTitle', 'confirmMapButton'])">Confirm</button>
         </div>
         <div class="tourTime">
             <t class="tourTimeText">Estimated tour time :</t>
