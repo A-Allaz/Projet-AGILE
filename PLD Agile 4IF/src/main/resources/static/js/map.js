@@ -10,19 +10,33 @@ async function loadJSON(url) {
     }
 }
 
-function loadData() {
-    return Promise.all([
-        loadJSON('node.json').then(data => {
-            nodes = data.nodes;
-            plotNodes(nodes);
-            checkAndPlotSegments();
-        }),
-        loadJSON('segment.json').then(data => {
-            roadSegments = data.roadSegments;
-            checkAndPlotSegments();
-        })
-    ]);
+async function loadData() {
+    try {
+        const response = await fetch('/mapData');
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.statusText);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            console.error('Error:', data.error);
+            return;
+        }
+
+        nodes = data.nodes;
+        roadSegments = data.roadSegments;
+
+        plotNodes(nodes);
+        plotRoadSegments(roadSegments);
+
+    } catch (error) {
+        console.error('Error loading data:', error);
+        alert("Error loading data: " + error.message); // Display user-friendly error
+    }
 }
+
 
 function checkAndPlotSegments() {
     if (nodes && roadSegments) {
@@ -78,7 +92,7 @@ function fitMap(nodes) {
     return {center: center, zoom: zoom};
 }
 
-function displayMap(mapContainerId, toHideElementsIds) {
+function displayMap(mapFile, mapContainerId, toHideElementsIds) {
     map = L.map(mapContainerId)
 
     for(const elementId of toHideElementsIds){
@@ -100,9 +114,44 @@ function displayMap(mapContainerId, toHideElementsIds) {
         .catch(error => {
             console.error('Error loading data:', error);
         });
-    console.log(loadedNodes)
     const {center, zoom} = fitMap(nodes)
     console.log(center);
     console.log(zoom); 
     map.setView(center, zoom)
+}
+
+document.getElementById('confirmMapButton').addEventListener('click', function () {
+    const input = document.getElementById('mapFileInput');
+    if (input.files.length > 0) {
+        const file = input.files[0];
+        console.log('Selected file:', file);
+        sendFileToServer(file, '/uploadMap');
+    } else {
+        alert("No file selected");
+    }
+});
+
+function sendFileToServer(file, uploadUrl) {
+    const formData = new FormData();
+    formData.append("file", file);
+    console.log('FormData:', Array.from(formData.entries())); // Log form data entries
+
+    fetch(uploadUrl, {
+        method: "POST",
+        body: formData
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text(); // Get response as text
+        })
+        .then(data => {
+            console.log('File upload successful:', data);
+            alert(data);  // Display the response in an alert
+        })
+        .catch(error => {
+            console.error('Error uploading file:', error);
+            alert("Error uploading the file: " + error);
+        });
 }
