@@ -1,0 +1,22 @@
+{
+  "name": "projet-agile",
+  "version": "1.0.0",
+  "description": "## Index:",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/A-Allaz/Projet-AGILE.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/A-Allaz/Projet-AGILE/issues"
+  },
+  "homepage": "https://github.com/A-Allaz/Projet-AGILE#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.48.1",
+    "@types/node": "^22.7.8"
+  }
+}
