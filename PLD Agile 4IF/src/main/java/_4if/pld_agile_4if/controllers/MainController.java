@@ -1,40 +1,46 @@
 package _4if.pld_agile_4if.controllers;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
 import _4if.pld_agile_4if.models.CityMap;
+import _4if.pld_agile_4if.models.Delivery;
+import _4if.pld_agile_4if.models.RoadSegment;
+import _4if.pld_agile_4if.models.Warehouse;
+import _4if.pld_agile_4if.services.DeliveryManagementService;
+import _4if.pld_agile_4if.services.TourCalculatorService;
 import _4if.pld_agile_4if.services.XMLParsingService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
 public class MainController {
+
+    @Autowired
+    private XMLParsingService xmlParsingService;
+
+    @Autowired
+    private TourCalculatorService tourCalculatorService;
+
+    @Autowired
+    private DeliveryManagementService deliveryManagementService;
+
+    private CityMap cityMap;
 
     @RequestMapping("/")
     public String index() {
         return "home";
     }
 
-    @Autowired
-    private XMLParsingService xmlParsingService;  // Service pour parser les fichiers XML
-
-    private CityMap cityMap;
-
     // Endpoint pour charger le fichier XML de la carte
     @PostMapping("/uploadMap")
     @ResponseBody
     public String uploadMapFile(@RequestParam("file") MultipartFile file) {
         try {
-            // Convertir le fichier Multipart en fichier temporaire
             File tempFile = File.createTempFile("cityMap", ".xml");
             file.transferTo(tempFile);
 
@@ -47,7 +53,7 @@ public class MainController {
         }
     }
 
-    // Endpoint pour récupérer les données du CityMap et les envoyer sous forme de JSON
+    // Endpoint pour récupérer les données du CityMap sous forme de JSON
     @GetMapping("/mapData")
     @ResponseBody
     public Map<String, Object> getMapData() {
@@ -61,22 +67,45 @@ public class MainController {
         return data;
     }
 
-    // Endpoint pour charger le fichier XML des livraisons (si nécessaire)
+    // Endpoint pour charger le fichier XML des livraisons
     @PostMapping("/uploadTour")
     @ResponseBody
     public String uploadTourFile(@RequestParam("file") MultipartFile file) {
         try {
-            // Gérer le fichier des livraisons (similaire au fichier de carte)
             File tempFile = File.createTempFile("deliveryTour", ".xml");
             file.transferTo(tempFile);
 
-            // Vous pouvez ajouter une logique similaire ici pour parser et stocker les livraisons
-            // ...
+            List<Delivery> deliveries = xmlParsingService.parseDeliveryList(tempFile);
+            Warehouse warehouse = xmlParsingService.parseWarehouse(tempFile);
+            cityMap.setWarehouse(warehouse);
+
+            // Ajouter les livraisons et recalculer les tournées
+            for (Delivery delivery : deliveries) {
+                deliveryManagementService.addDelivery(delivery);
+            }
+
             return "Delivery tour uploaded successfully!";
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return "Error uploading the tour file: " + e.getMessage();
         }
     }
 
+    // Endpoint pour récupérer les données des tournées optimisées
+    @GetMapping("/optimalTour")
+    @ResponseBody
+    public Map<String, Object> getOptimalTour() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            List<Delivery> deliveries = deliveryManagementService.getAllDeliveries();
+            List<RoadSegment> optimalTour = tourCalculatorService.calculateOptimalTour(cityMap, deliveries, cityMap.getWarehouse().getAddress());
+
+            response.put("optimalTour", optimalTour);
+            response.put("status", "success");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("error", "Error calculating optimal tour: " + e.getMessage());
+        }
+        return response;
+    }
 }
