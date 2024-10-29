@@ -89,40 +89,56 @@ function fitMap(nodes) {
     return {center: center, zoom: zoom};
 }
 
+function displayOptimalTour(tourSegments) {
+    tourSegments.forEach(segment => {
+        const originNode = nodes.find(node => node.id === segment.origin);
+        const destinationNode = nodes.find(node => node.id === segment.destination);
+
+        if (originNode && destinationNode) {
+            L.polyline([
+                [originNode.latitude, originNode.longitude],
+                [destinationNode.latitude, destinationNode.longitude]
+            ], {
+                color: "red",
+                weight: 4
+            }).addTo(map);
+        }
+    });
+}
+
 function displayMap(fileInputId, mapContainerId, toHideElementsIds) {
+    const fileInput = document.getElementById(fileInputId);
+    const mapFile = fileInput.files[0];
 
-    const fileInput = document.getElementById(fileInputId)
-    const mapFile = (fileInput.files)[0]
-
-    console.log(mapFile)
-
-    sendFileToServer(mapFile, '/uploadMap')
-
-    map = L.map(mapContainerId)
-
-    for(const elementId of toHideElementsIds){
-        const element = document.getElementById(elementId)
-        element.style.visibility = "hidden"
+    if (!mapFile) {
+        alert("Please select a map file to upload.");
+        return;
     }
 
+    sendFileToServer(mapFile, '/uploadMap');
+
+    map = L.map(mapContainerId);
+
+    // Masquer les éléments après confirmation de la carte
+    toHideElementsIds.forEach(function (elementId) {
+        const element = document.getElementById(elementId);
+        element.style.visibility = "hidden";
+    });
+
+    // Afficher la carte avec les données téléchargées
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map)
-    
+    }).addTo(map);
+
+    // Charger les données de la carte
     loadData()
         .then(() => {
-            const {center, zoom} = fitMap(nodes);
-            console.log(center);
-            console.log(zoom);
+            const { center, zoom } = fitMap(nodes);
             map.setView(center, zoom);
         })
         .catch(error => {
-            console.error('Error loading data:', error);
+            console.error('Error loading map data:', error);
         });
-    const {center, zoom} = fitMap(nodes)
-    console.log(center);
-    console.log(zoom); 
-    map.setView(center, zoom)
 }
 
 function sendFileToServer(file, uploadUrl) {
@@ -147,5 +163,51 @@ function sendFileToServer(file, uploadUrl) {
         .catch(error => {
             console.error('Error uploading file:', error);
             alert("Error uploading the file: " + error);
+        });
+}
+
+// Fonction pour charger les points de livraison et d'entrepôt, puis les afficher sur la carte
+function loadMapPoints() {
+    if (!map) {
+        console.error("Map is not initialized. Please initialize the map before adding points.");
+        return;
+    }
+
+    fetch('/mapPoints')
+        .then(response => response.json())
+        .then(data => {
+            const deliveries = data.deliveries;
+            const warehouse = data.warehouse;
+
+            // Ajouter un marqueur pour l'entrepôt
+            if (warehouse) {
+                L.marker([warehouse.latitude, warehouse.longitude], {
+                    icon: L.icon({
+                        iconUrl: '../images/warehouse.png',  // URL de l'icône de l'entrepôt
+                        iconSize: [25, 25]
+                    })
+                }).addTo(map).bindPopup("Warehouse");
+            }
+
+            // Ajouter des marqueurs pour chaque livraison
+            deliveries.forEach((delivery, index) => {
+                L.marker([delivery.pickupLocation.latitude, delivery.pickupLocation.longitude], {
+                    icon: L.icon({
+                        iconUrl: '../images/pickup.png',  // URL de l'icône de pickup
+                        iconSize: [20, 20]
+                    })
+                }).addTo(map).bindPopup(`Pickup ${index + 1}`);
+
+                L.marker([delivery.deliveryLocation.latitude, delivery.deliveryLocation.longitude], {
+                    icon: L.icon({
+                        iconUrl: '../images/delivery.png',  // URL de l'icône de livraison
+                        iconSize: [20, 20]
+                    })
+                }).addTo(map).bindPopup(`Delivery ${index + 1}`);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading map points:', error);
+            alert("Could not load map points: " + error.message);
         });
 }
