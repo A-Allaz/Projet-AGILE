@@ -108,4 +108,21 @@ public class MainController {
         }
         return response;
     }
+
+    @GetMapping("/deliveries")
+    @ResponseBody
+    public List<Delivery> getDeliveries() {
+        return deliveryManagementService.getAllDeliveries();
+    }
+
+    @GetMapping("/mapPoints")
+    @ResponseBody
+    public Map<String, Object> getMapPoints() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("deliveries", deliveryManagementService.getAllDeliveries());
+        data.put("warehouse", cityMap.getWarehouse());
+        return data;
+    }
+
+
 }
