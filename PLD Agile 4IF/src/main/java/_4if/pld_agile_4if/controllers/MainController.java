@@ -98,9 +98,14 @@ public class MainController {
         Map<String, Object> response = new HashMap<>();
         try {
             List<Delivery> deliveries = deliveryManagementService.getAllDeliveries();
-            List<RoadSegment> optimalTour = tourCalculatorService.calculateOptimalTour(cityMap, deliveries, cityMap.getWarehouse().getAddress());
+
+            // Appel de la méthode `calculateOptimalTourWithEstimates` pour obtenir le tour optimal et les estimations de temps
+            Map<String, Object> result = tourCalculatorService.calculateOptimalTourWithEstimates(cityMap, deliveries, cityMap.getWarehouse().getAddress());
+            List<RoadSegment> optimalTour = (List<RoadSegment>) result.get("optimalTour");
+            List<Map<String, Object>> timeEstimates = (List<Map<String, Object>>) result.get("timeEstimates");
 
             response.put("optimalTour", optimalTour);
+            response.put("timeEstimates", timeEstimates);
             response.put("status", "success");
         } catch (Exception e) {
             e.printStackTrace();

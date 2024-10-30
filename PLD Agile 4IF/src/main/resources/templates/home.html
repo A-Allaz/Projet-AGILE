@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" defer></script>
-    <script th:src="@{/js/app.js}" defer></script>
+    <script th:src="@{/js/map.js}" defer></script>
+    <script th:src="@{/js/home.js}" defer></script>
     <style>
         #map {
             height: 100%;
@@ -17,6 +18,8 @@
         .deliveriesListBox {
             border: 1px solid #ccc;
             padding: 10px;
+            overflow : auto;
+            border-radius: 5px;
         }
         .delivery-item {
             border: 1px solid #ddd;
@@ -27,6 +30,13 @@
 
         .delivery-item:hover {
             background-color: #f1f1f1;
+        }
+
+        .stopListBox {
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow : auto;
+            border-radius: 5px;
         }
     </style>
 </head>
