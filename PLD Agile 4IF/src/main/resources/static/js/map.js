@@ -80,7 +80,7 @@ function fitMap(nodes) {
         node.longitude > northeast.lon ? northeast.lon = node.longitude : null;
         node.latitude < southwest.lat ? southwest.lat = node.latitude : null;
         node.longitude < southwest.lon ? southwest.lon = node.longitude : null;
-    } 
+    }
 
     var center = [(northeast.lat + southwest.lat) / 2, (northeast.lon + southwest.lon) / 2]
     var zoom = map.getBoundsZoom(L.latLngBounds(southwest, northeast))
@@ -103,6 +103,40 @@ function displayOptimalTour(tourSegments) {
                 weight: 4
             }).addTo(map);
         }
+    });
+}
+
+function displayTimeEstimates(timeEstimates) {
+    console.log(timeEstimates);
+    const timeEstimatesDiv = document.querySelector(".stopListBox");
+    timeEstimatesDiv.innerHTML = "";  // Clear any existing content
+
+    // const departureTime = new Time(timeEstimates[0].departureTime);
+    // const arrivalTime = new Date(timeEstimates[timeEstimates.length - 1].arrivalTime);
+    //const totalDuration = (arrivalTime - departureTime);
+
+    const departureTime = new Date();
+    departureTime.setHours(timeEstimates[0].departureTime.split(":")[0], timeEstimates[0].departureTime.split(":")[1], timeEstimates[0].departureTime.split(":")[2]);
+
+    const arrivalTime = new Date();
+    arrivalTime.setHours(timeEstimates[timeEstimates.length - 1].arrivalTime.split(":")[0], timeEstimates[timeEstimates.length - 1].arrivalTime.split(":")[1], timeEstimates[timeEstimates.length - 1].arrivalTime.split(":")[2]);
+
+    const totalDuration = (arrivalTime.getTime() - departureTime.getTime()) / 1000;
+
+    const DurationItem = document.getElementById("tourTimeValue");
+    // total duration of the tour on the model hh:mm:ss
+    console.log(departureTime);
+    console.log(arrivalTime);
+    console.log(totalDuration);
+    DurationItem.innerHTML = `${Math.floor(totalDuration / 3600)}h ${Math.floor((totalDuration % 3600) / 60)}m ${totalDuration % 60}s`;
+
+    timeEstimates.forEach((estimate, index) => {
+        const estimateItem = document.createElement("div");
+        estimateItem.classList.add("estimate-item");
+        estimateItem.innerHTML = `
+            <p><strong>Segment ${index + 1}: </strong>Street Name: ${estimate.segment.name} Departure: ${estimate.departureTime}, Arrival: ${estimate.arrivalTime}</p>
+        `;
+        timeEstimatesDiv.appendChild(estimateItem);
     });
 }
 

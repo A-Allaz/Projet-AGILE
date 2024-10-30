@@ -6,13 +6,16 @@ import _4if.pld_agile_4if.models.Intersection;
 import _4if.pld_agile_4if.models.RoadSegment;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.*;
 
 @Service
 public class TourCalculatorService {
 
+    private static final double COURIER_SPEED_KMH = 15.0;  // Vitesse en km/h
+
     // Méthode principale pour calculer le meilleur tour
-    public List<RoadSegment> calculateOptimalTour(CityMap cityMap, List<Delivery> deliveries, long warehouseId) {
+    public  Map<String, Object> calculateOptimalTourWithEstimates(CityMap cityMap, List<Delivery> deliveries, long warehouseId) {
         // Étape 1: Identifier tous les points d'intérêt (entrepôt, points de pickup et livraison)
         Set<Long> pointsOfInterest = new HashSet<>();
         pointsOfInterest.add(cityMap.getWarehouse().getAddress()); // Ajout de l'entrepôt
@@ -35,7 +38,16 @@ public class TourCalculatorService {
         // Étape 5: Retrouver le chemin complet entre chaque points du programme de livraison
         List<RoadSegment> completeDeliveryPath = getCompletePath(cityMap, optimalTour);
 
-        return completeDeliveryPath;
+        // Étape 6: Calculer les estimations de temps pour chaque arrêt
+        List<Map<String, Object>> timeEstimates = calculateTimeEstimates(completeDeliveryPath, deliveries, cityMap.getWarehouse().getDepartureTime());
+
+        // Retourner les deux résultats dans une Map
+        Map<String, Object> result = new HashMap<>();
+        result.put("optimalTour", completeDeliveryPath); // Chemin complet des segments de route
+        result.put("timeEstimates", timeEstimates);      // Estimations de temps pour chaque arrêt
+
+        return result;
+
     }
 
     // Méthode pour calculer les plus courts chemins à partir de chaque point d'intérêt
@@ -242,6 +254,38 @@ public class TourCalculatorService {
         }
 
         return path;
+    }
+
+    // Méthode pour calculer les estimations de temps pour chaque arrêt
+    private List<Map<String, Object>> calculateTimeEstimates(List<RoadSegment> completeDeliveryPath, List<Delivery> deliveries, LocalTime startTime) {
+        List<Map<String, Object>> timeEstimates = new ArrayList<>();
+        LocalTime currentTime = startTime;
+
+        for (RoadSegment segment : completeDeliveryPath) {
+            double distanceKm = segment.getLength() / 1000.0; // Conversion de mètres en kilomètres
+            long travelTimeSeconds = (long) ((distanceKm / COURIER_SPEED_KMH) * 3600);
+
+            Map<String, Object> stopInfo = new HashMap<>();
+            stopInfo.put("segment", segment);
+            stopInfo.put("arrivalTime", currentTime);
+            currentTime = currentTime.plusSeconds(travelTimeSeconds);
+            stopInfo.put("departureTime", currentTime);
+
+            timeEstimates.add(stopInfo);
+
+            // Check if this stop is a pickup or delivery
+            for (Delivery delivery : deliveries) {
+                if (delivery.getPickupLocation() == segment.getDestination()) {
+                    currentTime = currentTime.plusSeconds(delivery.getPickupTime());
+                    break;
+                } else if (delivery.getDeliveryLocation() == segment.getDestination()) {
+                    currentTime = currentTime.plusSeconds(delivery.getDeliveryTime());
+                    break;
+                }
+            }
+        }
+
+        return timeEstimates;
     }
 
 

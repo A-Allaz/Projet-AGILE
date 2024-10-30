@@ -102,6 +102,7 @@ async function fetchOptimalTour() {
 
         // Afficher la tournée optimisée
         displayOptimalTour(data.optimalTour);
+        displayTimeEstimates(data.timeEstimates);
 
     } catch (error) {
         console.error('Error fetching optimal tour:', error);
