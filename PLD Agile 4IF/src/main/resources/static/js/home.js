@@ -70,7 +70,16 @@ function uploadTourFile() {
             alert(data);  // Affiche le message du serveur
 
             loadDeliveries();  // Charge la liste des livraisons dans le div
-            loadMapPoints();   // Affiche les points sur la carte
+
+            // Debug: vérifiez si la carte est initialisée
+            console.log("Map initialized:", typeof map !== 'undefined');
+
+            if (typeof map !== 'undefined') {
+                console.log("Calling loadMapPoints...");
+                loadMapPoints();   // Affiche les points sur la carte
+            } else {
+                console.error("La carte n'est pas initialisée. Assurez-vous d'avoir appelé displayMap().");
+            }
         })
         .catch(error => {
             console.error('Error uploading tour file:', error);
