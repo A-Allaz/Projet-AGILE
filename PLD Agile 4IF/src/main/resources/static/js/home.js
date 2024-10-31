@@ -1,4 +1,5 @@
 const TEST = true
+var deliveries;
 
 document.addEventListener("DOMContentLoaded", function() {
 
@@ -118,7 +119,7 @@ async function loadDeliveries() {
             throw new Error(`Failed to load deliveries: ${response.statusText}`);
         }
 
-        const deliveries = await response.json();
+        deliveries = await response.json();
         const deliveriesListBox = document.querySelector(".deliveriesListBox");
         deliveriesListBox.innerHTML = "";  // Clear any existing content
 
