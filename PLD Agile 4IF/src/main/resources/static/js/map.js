@@ -109,35 +109,109 @@ function displayOptimalTour(tourSegments) {
 function displayTimeEstimates(timeEstimates) {
     console.log(timeEstimates);
     const timeEstimatesDiv = document.querySelector(".stopListBox");
-    timeEstimatesDiv.innerHTML = "";  // Clear any existing content
+    timeEstimatesDiv.innerHTML = ""; // Effacer tout contenu existant
 
-    // const departureTime = new Time(timeEstimates[0].departureTime);
-    // const arrivalTime = new Date(timeEstimates[timeEstimates.length - 1].arrivalTime);
-    //const totalDuration = (arrivalTime - departureTime);
-
-    const departureTime = new Date();
-    departureTime.setHours(timeEstimates[0].departureTime.split(":")[0], timeEstimates[0].departureTime.split(":")[1], timeEstimates[0].departureTime.split(":")[2]);
-
-    const arrivalTime = new Date();
-    arrivalTime.setHours(timeEstimates[timeEstimates.length - 1].arrivalTime.split(":")[0], timeEstimates[timeEstimates.length - 1].arrivalTime.split(":")[1], timeEstimates[timeEstimates.length - 1].arrivalTime.split(":")[2]);
-
-    const totalDuration = (arrivalTime.getTime() - departureTime.getTime()) / 1000;
-
-    const DurationItem = document.getElementById("tourTimeValue");
-    // total duration of the tour on the model hh:mm:ss
-    console.log(departureTime);
-    console.log(arrivalTime);
-    console.log(totalDuration);
-    DurationItem.innerHTML = `${Math.floor(totalDuration / 3600)}h ${Math.floor((totalDuration % 3600) / 60)}m ${totalDuration % 60}s`;
+    let groupSegments = [];  // Pour stocker les segments de chaque groupe
+    let groupStartTime = null;  // Heure de départ du groupe
+    let groupEndTime = null;    // Heure d'arrivée au point de Pickup ou Delivery
+    let groupIndex = 1;         // Compteur pour l'index des groupes
 
     timeEstimates.forEach((estimate, index) => {
-        const estimateItem = document.createElement("div");
-        estimateItem.classList.add("estimate-item");
-        estimateItem.innerHTML = `
-            <p><strong>Segment ${index + 1}: </strong>Street Name: ${estimate.segment.name} Departure: ${estimate.departureTime}, Arrival: ${estimate.arrivalTime}</p>
+        // Si c'est le premier segment du groupe, initialiser l'heure de départ
+        if (!groupStartTime) {
+            groupStartTime = estimate.departureTime;
+        }
+
+        // Ajouter le segment actuel aux détails du groupe
+        groupSegments.push({
+            length: estimate.segment.length,
+            name: estimate.segment.name
+        });
+
+        // Vérifier si le segment est un point de destination (on retrouve segment.destination dans deliveries)
+        if (deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination)) {
+
+        // Enregistrer l'heure d'arrivée pour ce groupe
+            groupEndTime = estimate.arrivalTime;
+
+            // Créer l'élément de groupe pour affichage
+            const groupItem = document.createElement("div");
+            groupItem.classList.add("estimate-item");
+
+            // Ajouter en-tête de groupe avec heure de départ
+            groupItem.innerHTML = `
+                <p><strong>Aller au ${deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination) ? "Pickup" : "Delivery"} ${groupIndex} : départ ${groupStartTime}</strong></p>
+                <p><strong>Détails :</strong></p>
+            `;
+
+            // Ajouter les détails de chaque segment du groupe
+            groupSegments.forEach((segment, index) => {
+                if (index > 0 && groupSegments[index - 1].name === segment.name) {
+                    // Ajouter la longueur du segment courant au segment précédent
+                    groupSegments[index - 1].length += segment.length;
+                } else {
+                    const detailItem = document.createElement("p");
+                    detailItem.innerHTML = `
+            ${segment.name} ------------------- ${segment.length.toFixed(1)} m<br>
         `;
-        timeEstimatesDiv.appendChild(estimateItem);
+                    groupItem.appendChild(detailItem);
+                }
+            });
+
+            // Ajouter l'heure d'arrivée du groupe
+            const arrivalItem = document.createElement("p");
+            arrivalItem.innerHTML = `<strong>Arrivée ${groupEndTime}</strong>`;
+            groupItem.appendChild(arrivalItem);
+
+            // Séparation visuelle pour le groupe
+            groupItem.appendChild(document.createElement("hr"));
+            timeEstimatesDiv.appendChild(groupItem);
+
+            // Préparer pour le prochain groupe
+            groupSegments = [];        // Réinitialiser les segments pour le nouveau groupe
+            groupStartTime = null;     // Réinitialiser l'heure de départ
+            groupIndex++;              // Incrémenter l'index du groupe
+        }
     });
+
+    // Ajouter le trajet retour vers l'entrepôt
+    if (groupSegments.length > 0) {
+        const returnItem = document.createElement("div");
+        returnItem.classList.add("estimate-item");
+
+        returnItem.innerHTML = `
+            <p><strong>Retour à l'entrepôt : départ ${timeEstimates[timeEstimates.findIndex(estimate => estimate.arrivalTime === groupEndTime) + 1].departureTime}</strong></p>
+            <p><strong>Détails :</strong></p>
+        `;
+
+        groupSegments.forEach((segment, index) => {
+            if (index > 0 && groupSegments[index - 1].name === segment.name) {
+                groupSegments[index - 1].length += segment.length;
+            } else {
+                const detailItem = document.createElement("p");
+                detailItem.innerHTML = `
+                    ${segment.name} ------------------- ${segment.length.toFixed(1)} m<br>
+                `;
+                returnItem.appendChild(detailItem);
+            }
+        });
+
+        const arrivalItem = document.createElement("p");
+        arrivalItem.innerHTML = `<strong>Arrivée ${timeEstimates[timeEstimates.length - 1].arrivalTime}</strong>`;
+        returnItem.appendChild(arrivalItem);
+
+        returnItem.appendChild(document.createElement("hr"));
+        timeEstimatesDiv.appendChild(returnItem);
+    }
+    // Afficher le temps total de la tournée
+    const totalTourTime = timeEstimates[timeEstimates.length - 1].arrivalTime;
+    let beginTour = new Date();
+    beginTour.setHours(timeEstimates[0].departureTime.split(":")[0], timeEstimates[0].departureTime.split(":")[1], timeEstimates[0].departureTime.split(":")[2]);
+    let endTour = new Date();
+    endTour.setHours(totalTourTime.split(":")[0], totalTourTime.split(":")[1], totalTourTime.split(":")[2]);
+
+    // Affichage selon le format --h--m--s
+    document.getElementById("tourTimeValue").innerText = `${String(Math.floor((endTour - beginTour) / 1000 / 60 / 60)).padStart(2, '0')}h${String(Math.floor((endTour - beginTour) / 1000 / 60 % 60)).padStart(2, '0')}m${String(Math.floor((endTour - beginTour) / 1000 % 60)).padStart(2, '0')}s`;
 }
 
 function displayMap(fileInputId, mapContainerId, toHideElementsIds) {

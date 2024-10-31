@@ -267,9 +267,9 @@ public class TourCalculatorService {
 
             Map<String, Object> stopInfo = new HashMap<>();
             stopInfo.put("segment", segment);
-            stopInfo.put("arrivalTime", currentTime);
-            currentTime = currentTime.plusSeconds(travelTimeSeconds);
             stopInfo.put("departureTime", currentTime);
+            currentTime = currentTime.plusSeconds(travelTimeSeconds);
+            stopInfo.put("arrivalTime", currentTime);
 
             timeEstimates.add(stopInfo);
 
