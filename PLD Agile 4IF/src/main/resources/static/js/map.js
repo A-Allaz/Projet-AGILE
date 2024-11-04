@@ -1,5 +1,9 @@
 var nodes, roadSegments, map;
 
+// Variables pour suivre l'état de la sélection
+let isSelectingPickup = false;
+let isSelectingDelivery = false;
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -89,6 +93,22 @@ function fitMap(nodes) {
     return {center: center, zoom: zoom};
 }
 
+// Function to find the nearest node to a given latitude and longitude
+function findNearestNode(lat, lng) {
+    let nearestNode = null;
+    let minDistance = Infinity;
+
+    nodes.forEach(node => {
+        const distance = Math.sqrt(Math.pow(node.latitude - lat, 2) + Math.pow(node.longitude - lng, 2));
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearestNode = node;
+        }
+    });
+
+    return nearestNode;
+}
+
 function displayOptimalTour(tourSegments) {
     tourSegments.forEach(segment => {
         const originNode = nodes.find(node => node.id === segment.origin);
@@ -140,7 +160,7 @@ function displayTimeEstimates(timeEstimates) {
 
             // Ajouter en-tête de groupe avec heure de départ
             groupItem.innerHTML = `
-                <p><strong>Aller au ${deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination) ? "Pickup" : "Delivery"} ${groupIndex} : départ ${groupStartTime}</strong></p>
+                <p><strong>Aller au ${deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination) ? "Pickup" : "Delivery"} ${deliveries.find(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination).id} : départ ${groupStartTime}</strong></p>
                 <p><strong>Détails :</strong></p>
             `;
 
@@ -243,6 +263,7 @@ function displayMap(fileInputId, mapContainerId, toHideElementsIds) {
         .then(() => {
             const { center, zoom } = fitMap(nodes);
             map.setView(center, zoom);
+            initializeMapClickListener(); // Call after map is initialized
         })
         .catch(error => {
             console.error('Error loading map data:', error);
@@ -311,7 +332,7 @@ function loadMapPoints() {
                         iconUrl: '../images/pickup.png',  // URL de l'icône de pickup
                         iconSize: [20, 20]
                     })
-                }).addTo(map).bindPopup(`Pickup ${index + 1}`);
+                }).addTo(map).bindPopup(`Pickup ${delivery.id}`);
 
                 const nodeDelivery = nodes.find(node => node.id === delivery.deliveryLocation);
                 L.marker([nodeDelivery.latitude, nodeDelivery.longitude], {
@@ -319,11 +340,108 @@ function loadMapPoints() {
                         iconUrl: '../images/delivery.png',  // URL de l'icône de livraison
                         iconSize: [20, 20]
                     })
-                }).addTo(map).bindPopup(`Delivery ${index + 1}`);
+                }).addTo(map).bindPopup(`Delivery ${delivery.id}`);
             });
         })
         .catch(error => {
             console.error('Error loading map points:', error);
             alert("Could not load map points: " + error.message);
         });
+}
+
+function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliveryTime) {
+    const requestBody = new URLSearchParams({
+        pickupLocation: pickupLocation,
+        deliveryLocation: deliveryLocation,
+        pickupTime: pickupTime,
+        deliveryTime: deliveryTime
+    });
+
+    console.log('Request Body:', requestBody.toString());
+
+    fetch('/addDelivery', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: requestBody
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === "success") {
+                console.log(data.message);
+                // Add the new delivery in deliveries variable with an id
+                const newDelivery = {
+                    id: deliveries.length + 1,
+                    pickupLocation: pickupLocation,
+                    deliveryLocation: deliveryLocation,
+                    pickupTime: pickupTime,
+                    deliveryTime: deliveryTime
+                };
+                deliveries.push(newDelivery);
+
+                // Clear the input fields
+                document.getElementById('pickupLocationInput').value = "";
+                document.getElementById('deliveryLocationInput').value = "";
+                document.querySelector("input[placeholder='Pickup time:']").value = "";
+                document.querySelector("input[placeholder='Delivery time:']").value = "";
+
+                // Refresh the deliveries list box to display the new delivery
+                loadDeliveries();
+
+                // Refresh the map to display the new point
+                loadMapPoints();
+
+                // Refresh the details of the delivery tour
+                fetchOptimalTour();
+            } else {
+                console.error(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+
+// Function to initialize the event listeners on the map
+function initializeMapClickListener() {
+    map.on('click', function (e) {
+        const latlng = e.latlng;
+
+        if (isSelectingPickup) {
+            const pickupInput = document.getElementById('pickupLocationInput');
+            if (pickupInput) {
+                pickupInput.value = `${latlng.lat}, ${latlng.lng}`;
+                isSelectingPickup = false; // Disable Pickup selection mode
+            } else {
+                console.error("Pickup location input not found.");
+            }
+        } else if (isSelectingDelivery) {
+            const deliveryInput = document.getElementById('deliveryLocationInput');
+            if (deliveryInput) {
+                deliveryInput.value = `${latlng.lat}, ${latlng.lng}`;
+                isSelectingDelivery = false; // Disable Delivery selection mode
+            } else {
+                console.error("Delivery location input not found.");
+            }
+        }
+    });
+}
+
+// Fonction pour activer le mode de sélection de Pickup
+function enablePickupSelection() {
+    isSelectingPickup = true;
+    isSelectingDelivery = false;
+    alert("Click on the map to select the Pickup location.");
+}
+
+// Fonction pour activer le mode de sélection de Delivery
+function enableDeliverySelection() {
+    isSelectingPickup = false;
+    isSelectingDelivery = true;
+    alert("Click on the map to select the Delivery location.");
 }

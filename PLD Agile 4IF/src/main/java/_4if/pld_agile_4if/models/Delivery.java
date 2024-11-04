@@ -24,6 +24,14 @@ public class Delivery {
         this.id = idGenerator.incrementAndGet();  // Générer un ID unique
     }
 
+    public Delivery(long pickupLocation, long deliveryLocation, int pickupTime, int deliveryTime) {
+        this.id = idGenerator.incrementAndGet();  // Générer un ID unique
+        this.pickupLocation = pickupLocation;
+        this.deliveryLocation = deliveryLocation;
+        this.pickupTime = pickupTime;
+        this.deliveryTime = deliveryTime;
+    }
+
     public Delivery(long pickupLocation, long deliveryLocation, int pickupTime, int deliveryTime, Courier courier, Route route) {
         this.id = idGenerator.incrementAndGet();  // Générer un ID unique
         this.pickupLocation = pickupLocation;
