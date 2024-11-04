@@ -76,11 +76,13 @@
     </div>
     <div class="deliveriesListBox"></div>
     <div class="newDeliveryBox">
-        <button class="locationButton" style="margin-left: 5%;">Add pickup location</button>
-        <button class="locationButton" style="margin-left: 10%;">Add delivery location</button>
+        <button class="locationButton" style="margin-left: 5%;" onclick="enablePickupSelection()">Add pickup location</button>
+        <button class="locationButton" style="margin-left: 10%;" onclick="enableDeliverySelection()">Add delivery location</button>
+        <input type="text" id="pickupLocationInput" class="timeInput" style="margin-left: 5%;" placeholder="Pickup location:">
+        <input type="text" id="deliveryLocationInput" class="timeInput" style="margin-left: 10%;" placeholder="Delivery location:">
         <input type="text" class="timeInput" style="margin-left: 5%;" placeholder="Pickup time:">
         <input type="text" class="timeInput" style="margin-left: 10%;" placeholder="Delivery time:">
-        <button class="addButton">Add delivery</button>
+        <button class="addButton" onclick="addNewDelivery()">Add delivery</button>
     </div>
 </div>
 

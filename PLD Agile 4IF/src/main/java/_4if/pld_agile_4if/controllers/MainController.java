@@ -129,5 +129,35 @@ public class MainController {
         return data;
     }
 
+    // Endpoint pour ajouter une nouvelle livraison
+    @PostMapping("/addDelivery")
+    @ResponseBody
+    public Map<String, String> addDelivery(
+            @RequestParam("pickupLocation") long pickupLocation,
+            @RequestParam("deliveryLocation") long deliveryLocation,
+            @RequestParam("pickupTime") int pickupTime,
+            @RequestParam("deliveryTime") int deliveryTime) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            // Création d'une nouvelle instance de livraison
+            Delivery newDelivery = new Delivery();
+            newDelivery.setPickupLocation(pickupLocation);
+            newDelivery.setDeliveryLocation(deliveryLocation);
+            newDelivery.setPickupTime(pickupTime);
+            newDelivery.setDeliveryTime(deliveryTime);
+
+            // Ajout de la livraison via le service
+            deliveryManagementService.addDelivery(newDelivery);
+
+            response.put("status", "success");
+            response.put("message", "Delivery added successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Error adding delivery: " + e.getMessage());
+        }
+        return response;
+    }
+
 
 }

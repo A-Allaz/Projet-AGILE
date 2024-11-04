@@ -119,7 +119,7 @@ async function loadDeliveries() {
             throw new Error(`Failed to load deliveries: ${response.statusText}`);
         }
 
-        deliveries = await response.json();
+        deliveries = (await response.json()).map((delivery, index) => ({ ...delivery, id: index + 1 }));
         const deliveriesListBox = document.querySelector(".deliveriesListBox");
         deliveriesListBox.innerHTML = "";  // Clear any existing content
 
@@ -128,6 +128,7 @@ async function loadDeliveries() {
             const deliveryItem = document.createElement("div");
             deliveryItem.classList.add("delivery-item");
             deliveryItem.innerHTML = `
+                <h3>Delivery #${delivery.id}</h3>
                 <p><strong>Pickup:</strong> ${delivery.pickupLocation}</p>
                 <p><strong>Delivery:</strong> ${delivery.deliveryLocation}</p>
                 <p><strong>Pickup Time:</strong> ${delivery.pickupTime}</p>
@@ -140,4 +141,45 @@ async function loadDeliveries() {
         console.error('Error loading deliveries:', error);
         alert("Could not load deliveries: " + error.message);
     }
+}
+
+// Function to send a new delivery to the server
+function addNewDelivery() {
+    // Get the input values
+    const pickupLocationInput = document.getElementById('pickupLocationInput');
+    const deliveryLocationInput = document.getElementById('deliveryLocationInput');
+    const pickupTimeInput = document.querySelector("input[placeholder='Pickup time:']");
+    const deliveryTimeInput = document.querySelector("input[placeholder='Delivery time:']");
+
+    if (!pickupLocationInput || !deliveryLocationInput || !pickupTimeInput || !deliveryTimeInput) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    const pickupLocation = pickupLocationInput.value;
+    const deliveryLocation = deliveryLocationInput.value;
+    const pickupTime = pickupTimeInput.value;
+    const deliveryTime = deliveryTimeInput.value;
+
+    // Validate the input values
+    if (!pickupLocation || !deliveryLocation || !pickupTime || !deliveryTime) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    // Split the coordinates into latitude and longitude
+    const [pickupLat, pickupLng] = pickupLocation.split(',').map(coord => parseFloat(coord.trim()));
+    const [deliveryLat, deliveryLng] = deliveryLocation.split(',').map(coord => parseFloat(coord.trim()));
+
+    // Find the nearest nodes
+    const nearestPickupNode = findNearestNode(pickupLat, pickupLng);
+    const nearestDeliveryNode = findNearestNode(deliveryLat, deliveryLng);
+
+    if (!nearestPickupNode || !nearestDeliveryNode) {
+        alert("Could not find nearest nodes for the selected locations.");
+        return;
+    }
+
+    // Call the function to send the new delivery to the back-end
+    addDeliveryToServer(nearestPickupNode.id, nearestDeliveryNode.id, pickupTime, deliveryTime);
 }
