@@ -3,6 +3,8 @@ var nodes, roadSegments, map;
 // Variables pour suivre l'état de la sélection
 let isSelectingPickup = false;
 let isSelectingDelivery = false;
+let selectedDeliveryId = null;  // ID de la livraison en cours de modification
+
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -301,11 +303,21 @@ function loadMapPoints() {
         console.error("Map is not initialized. Please initialize the map before adding points.");
         return;
     }
+
+    // Enlever les anciens marqueurs de la carte
+    map.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+        }
+    });
+
+
     alert("Loading map points...");
 
     fetch('/mapPoints')
         .then(response => response.json())
         .then(data => {
+
             const deliveries = data.deliveries;
             const warehouse = data.warehouse;
 
@@ -411,9 +423,23 @@ function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliv
 function initializeMapClickListener() {
     map.on('click', function (e) {
         const latlng = e.latlng;
+        let elementIdPickup;
+        let elementIdDelivery;
+
+        if(modyfingDelivery){
+            elementIdPickup = 'editPickupLocation';
+            elementIdDelivery = 'editDeliveryLocation';
+        }
+        else {
+            elementIdPickup = 'pickupLocationInput';
+            elementIdDelivery = 'deliveryLocationInput';
+        }
+
+        console.log(elementIdDelivery);
+        console.log(elementIdPickup);
 
         if (isSelectingPickup) {
-            const pickupInput = document.getElementById('pickupLocationInput');
+            const pickupInput = document.getElementById(elementIdPickup);
             if (pickupInput) {
                 pickupInput.value = `${latlng.lat}, ${latlng.lng}`;
                 isSelectingPickup = false; // Disable Pickup selection mode
@@ -421,7 +447,7 @@ function initializeMapClickListener() {
                 console.error("Pickup location input not found.");
             }
         } else if (isSelectingDelivery) {
-            const deliveryInput = document.getElementById('deliveryLocationInput');
+            const deliveryInput = document.getElementById(elementIdDelivery);
             if (deliveryInput) {
                 deliveryInput.value = `${latlng.lat}, ${latlng.lng}`;
                 isSelectingDelivery = false; // Disable Delivery selection mode
