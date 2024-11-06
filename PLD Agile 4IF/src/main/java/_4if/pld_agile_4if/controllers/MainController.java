@@ -159,5 +159,46 @@ public class MainController {
         return response;
     }
 
+    @PutMapping("/updateDelivery/{deliveryId}")
+    @ResponseBody
+    public Map<String, String> updateDelivery(
+            @PathVariable("deliveryId") long deliveryId,
+            @RequestBody Delivery updatedDelivery) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            deliveryManagementService.modifyDelivery(deliveryId, updatedDelivery);
+            response.put("status", "success");
+            response.put("message", "Delivery updated successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Error updating delivery: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // Endpoint pour supprimer une livraison existante
+    @DeleteMapping("/deleteDelivery/{id}")
+    @ResponseBody
+    public Map<String, String> deleteDelivery(@PathVariable("id") long deliveryId) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            boolean success = deliveryManagementService.removeDelivery(deliveryId);
+
+            if (success) {
+                response.put("status", "success");
+                response.put("message", "Delivery deleted successfully!");
+            } else {
+                response.put("status", "error");
+                response.put("message", "Delivery not found.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Error deleting delivery: " + e.getMessage());
+        }
+        return response;
+    }
+
 
 }

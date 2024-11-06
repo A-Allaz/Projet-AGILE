@@ -34,9 +34,12 @@ public class DeliveryManagementService {
     }
 
     // Remove a delivery by its ID
-    public void removeDelivery(long deliveryId) {
-        deliveries.removeIf(delivery -> delivery.getId() == deliveryId);
-        recalculateTour();
+    public boolean removeDelivery(long deliveryId) {
+        boolean removed = deliveries.removeIf(delivery -> delivery.getId() == deliveryId);
+        if (removed) {
+            recalculateTour();
+        }
+        return removed;
     }
 
     // Modify an existing delivery by its ID
