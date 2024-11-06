@@ -30,7 +30,7 @@ async function loadData() {
         console.log('Road Segments:', roadSegments);
 
         // Plot the data on the map
-        plotNodes(nodes);
+        // plotNodes(nodes);
         plotRoadSegments(roadSegments);
 
     } catch (error) {
@@ -112,6 +112,13 @@ function findNearestNode(lat, lng) {
 }
 
 function displayOptimalTour(tourSegments) {
+    // Nettoyer les anciens segments de tournée
+    map.eachLayer(layer => {
+        if (layer instanceof L.Polyline && layer.options.color === "red") {
+            map.removeLayer(layer);
+        }
+    });
+
     tourSegments.forEach(segment => {
         const originNode = nodes.find(node => node.id === segment.origin);
         const destinationNode = nodes.find(node => node.id === segment.destination);
