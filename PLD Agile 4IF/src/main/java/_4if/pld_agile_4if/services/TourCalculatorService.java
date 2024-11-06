@@ -41,6 +41,9 @@ public class TourCalculatorService {
         // Étape 6: Calculer les estimations de temps pour chaque arrêt
         List<Map<String, Object>> timeEstimates = calculateTimeEstimates(completeDeliveryPath, deliveries, cityMap.getWarehouse().getDepartureTime());
 
+        // Etape 7: Vérifier que le temps total ne dépasse pas 7 heures
+        checkTotalTime(timeEstimates, deliveries);
+
         // Retourner les deux résultats dans une Map
         Map<String, Object> result = new HashMap<>();
         result.put("optimalTour", completeDeliveryPath); // Chemin complet des segments de route
@@ -286,6 +289,38 @@ public class TourCalculatorService {
         }
 
         return timeEstimates;
+    }
+
+    // Méthode pour vérifier que le temps total ne dépasse pas 7 heures
+    public void checkTotalTime(List<Map<String, Object>> timeEstimates, List<Delivery> deliveries)
+    {
+        double totalTimeMinutes = 0;
+
+        for (Map<String, Object> estimate : timeEstimates) {
+            LocalTime departureTime = (LocalTime) estimate.get("departureTime");
+            LocalTime arrivalTime = (LocalTime) estimate.get("arrivalTime");
+
+            long travelDurationSeconds = java.time.Duration.between(departureTime, arrivalTime).getSeconds();
+            totalTimeMinutes += travelDurationSeconds / 60.0;
+
+            if (estimate.containsKey("additionalWait")) {
+                long additionalWaitSeconds = (long) estimate.get("additionalWait");
+                totalTimeMinutes += additionalWaitSeconds / 60.0;
+            }
+        }
+
+        for (Delivery delivery : deliveries) {
+            long pickupTimeSeconds = delivery.getPickupTime();
+            long deliveryTimeSeconds = delivery.getDeliveryTime();
+
+            totalTimeMinutes += pickupTimeSeconds / 60.0;
+            totalTimeMinutes += deliveryTimeSeconds / 60.0;
+        }
+
+
+        if (totalTimeMinutes > 420) {
+            throw new IllegalArgumentException("The total time exceeds 7 hours: " + totalTimeMinutes + " minutes");
+        }
     }
 
 
