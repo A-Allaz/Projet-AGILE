@@ -113,8 +113,8 @@ body{
         .locationButton{
             color: black;
             width: 40%;
-            height: 25%;
-            margin-top: 5%;
+            height: 20%;
+            margin-top: 4%;
 
             border-radius: 5px;
             border-style: none;
@@ -125,7 +125,7 @@ body{
             color: black;
             width: 38%;
             float: left;
-            margin-top: 5%;
+            margin-top: 4%;
             height: 10%;
 
             border-radius: 5px;
@@ -135,7 +135,7 @@ body{
         .addButton{
             color: black;
             width: 90%;
-            height: 25%;
+            height: 20%;
             margin-top: 5%;
             margin-left: 5%;
 
