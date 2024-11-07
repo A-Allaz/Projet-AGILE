@@ -337,7 +337,7 @@ function loadMapPoints() {
             if (warehouse) {
                 L.marker([nodeWarehouse.latitude, nodeWarehouse.longitude], {
                     icon: L.icon({
-                        iconUrl: '../images/warehouse.png',  // URL de l'icône de l'entrepôt
+                        iconUrl: '../images/CastEx.png',  // URL de l'icône de l'entrepôt
                         iconSize: [25, 25]
                     })
                 }).addTo(map).bindPopup("Warehouse");
