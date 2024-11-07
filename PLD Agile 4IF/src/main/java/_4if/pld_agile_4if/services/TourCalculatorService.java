@@ -6,13 +6,16 @@ import _4if.pld_agile_4if.models.Intersection;
 import _4if.pld_agile_4if.models.RoadSegment;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.*;
 
 @Service
 public class TourCalculatorService {
 
+    private static final double COURIER_SPEED_KMH = 15.0;  // Vitesse en km/h
+
     // Méthode principale pour calculer le meilleur tour
-    public List<RoadSegment> calculateOptimalTour(CityMap cityMap, List<Delivery> deliveries, long warehouseId) {
+    public  Map<String, Object> calculateOptimalTourWithEstimates(CityMap cityMap, List<Delivery> deliveries, long warehouseId) {
         // Étape 1: Identifier tous les points d'intérêt (entrepôt, points de pickup et livraison)
         Set<Long> pointsOfInterest = new HashSet<>();
         pointsOfInterest.add(cityMap.getWarehouse().getAddress()); // Ajout de l'entrepôt
@@ -35,7 +38,19 @@ public class TourCalculatorService {
         // Étape 5: Retrouver le chemin complet entre chaque points du programme de livraison
         List<RoadSegment> completeDeliveryPath = getCompletePath(cityMap, optimalTour);
 
-        return completeDeliveryPath;
+        // Étape 6: Calculer les estimations de temps pour chaque arrêt
+        List<Map<String, Object>> timeEstimates = calculateTimeEstimates(completeDeliveryPath, deliveries, cityMap.getWarehouse().getDepartureTime());
+
+        // Etape 7: Vérifier que le temps total ne dépasse pas 7 heures
+        checkTotalTime(timeEstimates, deliveries);
+
+        // Retourner les deux résultats dans une Map
+        Map<String, Object> result = new HashMap<>();
+        result.put("optimalTour", completeDeliveryPath); // Chemin complet des segments de route
+        result.put("timeEstimates", timeEstimates);      // Estimations de temps pour chaque arrêt
+
+        return result;
+
     }
 
     // Méthode pour calculer les plus courts chemins à partir de chaque point d'intérêt
@@ -242,6 +257,70 @@ public class TourCalculatorService {
         }
 
         return path;
+    }
+
+    // Méthode pour calculer les estimations de temps pour chaque arrêt
+    private List<Map<String, Object>> calculateTimeEstimates(List<RoadSegment> completeDeliveryPath, List<Delivery> deliveries, LocalTime startTime) {
+        List<Map<String, Object>> timeEstimates = new ArrayList<>();
+        LocalTime currentTime = startTime;
+
+        for (RoadSegment segment : completeDeliveryPath) {
+            double distanceKm = segment.getLength() / 1000.0; // Conversion de mètres en kilomètres
+            long travelTimeSeconds = (long) ((distanceKm / COURIER_SPEED_KMH) * 3600);
+
+            Map<String, Object> stopInfo = new HashMap<>();
+            stopInfo.put("segment", segment);
+            stopInfo.put("departureTime", currentTime);
+            currentTime = currentTime.plusSeconds(travelTimeSeconds);
+            stopInfo.put("arrivalTime", currentTime);
+
+            timeEstimates.add(stopInfo);
+
+            // Check if this stop is a pickup or delivery
+            for (Delivery delivery : deliveries) {
+                if (delivery.getPickupLocation() == segment.getDestination()) {
+                    currentTime = currentTime.plusSeconds(delivery.getPickupTime());
+                    break;
+                } else if (delivery.getDeliveryLocation() == segment.getDestination()) {
+                    currentTime = currentTime.plusSeconds(delivery.getDeliveryTime());
+                    break;
+                }
+            }
+        }
+
+        return timeEstimates;
+    }
+
+    // Méthode pour vérifier que le temps total ne dépasse pas 7 heures
+    public void checkTotalTime(List<Map<String, Object>> timeEstimates, List<Delivery> deliveries)
+    {
+        double totalTimeMinutes = 0;
+
+        for (Map<String, Object> estimate : timeEstimates) {
+            LocalTime departureTime = (LocalTime) estimate.get("departureTime");
+            LocalTime arrivalTime = (LocalTime) estimate.get("arrivalTime");
+
+            long travelDurationSeconds = java.time.Duration.between(departureTime, arrivalTime).getSeconds();
+            totalTimeMinutes += travelDurationSeconds / 60.0;
+
+            if (estimate.containsKey("additionalWait")) {
+                long additionalWaitSeconds = (long) estimate.get("additionalWait");
+                totalTimeMinutes += additionalWaitSeconds / 60.0;
+            }
+        }
+
+        for (Delivery delivery : deliveries) {
+            long pickupTimeSeconds = delivery.getPickupTime();
+            long deliveryTimeSeconds = delivery.getDeliveryTime();
+
+            totalTimeMinutes += pickupTimeSeconds / 60.0;
+            totalTimeMinutes += deliveryTimeSeconds / 60.0;
+        }
+
+
+        if (totalTimeMinutes > 420) {
+            throw new IllegalArgumentException("The total time exceeds 7 hours: " + totalTimeMinutes + " minutes");
+        }
     }
 
 

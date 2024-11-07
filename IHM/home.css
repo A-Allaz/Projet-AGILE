@@ -1,0 +1,179 @@
+body{
+    background-color: rgb(255, 255, 255);
+}
+
+.leftBlock{
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    left: 2%;
+    top: 5%;
+
+    height: 90%;
+    width: 25%;
+
+    background-color: rgb(219, 227, 228);
+    color: rgb(0, 0, 0);
+    border-radius: 5px;
+    font-family: Arial, Helvetica, sans-serif;
+
+    .deliveriesListBox{
+        position: relative;
+        margin-top: 5%;
+
+        height: 50%;
+        width: 90%;
+
+        border-color: rgb(126, 126, 126);
+        border-width: 2px;
+        border-style: solid;
+
+        background-color: rgb(236, 236, 236);
+    }
+
+    .tourFileInputContainer{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+
+        .tourFileInputButton{
+            position: relative;
+        }
+    }
+
+    .newDeliveryBox{
+        position: relative;
+        margin-top: 5%;
+
+        height: 30%;
+        width: 90%;
+
+        border-color: rgb(126, 126, 126);
+        border-width: 2px;
+        border-style: solid;
+
+        background-color: rgb(236, 236, 236);
+
+        .locationButton{
+            color: black;
+            width: 40%;
+            height: 25%;
+            margin-top: 5%;
+
+            border-radius: 5px;
+            border-style: none;
+            float: left;
+        }
+
+        .timeInput{
+            color: black;
+            width: 38%;
+            float: left;
+            margin-top: 5%;
+            height: 10%;
+
+            border-radius: 5px;
+            border-style: solid;
+        }
+
+        .addButton{
+            color: black;
+            width: 90%;
+            height: 25%;
+            margin-top: 5%;
+            margin-left: 5%;
+
+            border-radius: 5px;
+            border-style: none;
+            float: left;
+        }
+    }
+}
+
+.mapBlock{
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    aspect-ratio: 1 / 1;
+    left: 30%;
+    top: 10%;
+
+    width: 40%;
+
+    border-width: 2px;
+    border-color: rgb(126, 126, 126);
+    border-style: dashed;
+    color: rgb(0, 0, 0);
+    border-radius: 0.5%;
+    font-family: Arial, Helvetica, sans-serif;
+
+    .mapButton{
+        color: rgb(0, 0, 0);
+        width: 50%;
+        margin-top: 2%;
+    }
+
+    .confirmButton{
+        color: rgb(0, 0, 0);
+        width: 50%;
+        margin-top: 2%;
+    }
+}
+
+.rightBlock{
+    position: fixed;
+    right: 2%;
+    top: 25%;
+
+    height: 70%;
+    width: 25%;
+
+    background-color: rgb(219, 227, 228);
+    color: rgb(0, 0, 0);
+    border-radius: 5px;
+    font-family: Arial, Helvetica, sans-serif;
+
+    .stopListBox{
+        position: relative;
+        margin-left: 5%;
+        margin-top: 5%;
+
+        height: 90%;
+        width: 90%;
+
+        border-color: rgb(126, 126, 126);
+        border-width: 2px;
+        border-style: solid;
+
+        background-color: rgb(236, 236, 236);
+    }
+}
+
+.tourTime{
+    position: fixed;
+    right: 2%;
+    top: 5%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    height: 15%;
+    width: 25%;
+
+    background-color: rgb(189, 221, 210);
+    color: rgb(0, 0, 0);
+    border-radius: 5px;
+
+    .tourTimeText{
+        color: rgb(0, 0, 0);
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: xx-large;
+    }
+}

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link th:href="@{/css/home.css}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" defer></script>
+    <script th:src="@{/js/map.js}" defer></script>
+    <script th:src="@{/js/home.js}" defer></script>
+    <style>
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        .deliveriesListBox {
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow : auto;
+            border-radius: 5px;
+        }
+        .delivery-item {
+            border: 1px solid #ddd;
+            margin: 5px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .delivery-item:hover {
+            background-color: #f1f1f1;
+        }
+
+        .stopListBox {
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow : auto;
+            border-radius: 5px;
+        }
+
+        .stopListBox {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            max-width: 400px;
+            font-family: Arial, sans-serif;
+        }
+
+        .estimate-item {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+
+        .estimate-item:last-child {
+            border-bottom: none;
+        }
+
+        .time, .distance {
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="leftBlock">
+    <!-- Chargement du fichier XML pour les tournées -->
+    <div class="tourFileInputContainer">
+        <input type="file" style="display: none;" id="tourFileInput" accept=".xml" onchange="updateFileName('tourFileInput', 'tourFileTitle')">
+        <button onclick="document.getElementById('tourFileInput').click();" class="tourFileInputButton">Import .xml delivery tour file</button>
+        <text id="tourFileTitle" style="margin-top: 2%;">Select a file</text>
+        <button onclick="uploadTourFile()" class="confirmButton">Confirm Tour</button>
+    </div>
+    <div class="deliveriesListBox"></div>
+    <div class="newDeliveryBox">
+        <button class="locationButton" style="margin-left: 5%;" onclick="enablePickupSelection()">Add pickup location</button>
+        <button class="locationButton" style="margin-left: 10%;" onclick="enableDeliverySelection()">Add delivery location</button>
+        <input type="text" id="pickupLocationInput" class="timeInput" style="margin-left: 5%;" placeholder="Pickup location:">
+        <input type="text" id="deliveryLocationInput" class="timeInput" style="margin-left: 10%;" placeholder="Delivery location:">
+        <input type="text" class="timeInput" style="margin-left: 5%;" placeholder="Pickup time:">
+        <input type="text" class="timeInput" style="margin-left: 10%;" placeholder="Delivery time:">
+        <button class="addButton" onclick="addNewDelivery()">Add delivery</button>
+    </div>
+</div>
+
+<!-- Bloc pour afficher la carte Leaflet -->
+<div class="mapBlock" id="mapContainer">
+    <!-- Import du fichier XML pour la carte -->
+    <input type="file" style="display: none;" id="mapFileInput" accept=".xml" onchange="updateFileName('mapFileInput', 'mapFileTitle', 'confirmMapButton')">
+    <button id="mapFileButton" onclick="document.getElementById('mapFileInput').click();" class="mapButton">Import .xml delivery map file</button>
+    <text id="mapFileTitle" style="margin-top: 2%;">Select a file</text>
+    <button id="confirmMapButton" class="confirmButton" onclick="displayMap('mapFileInput', 'mapContainer', ['mapFileButton', 'mapFileTitle', 'confirmMapButton'])">Confirm Map</button>
+</div>
+
+<!-- Affichage du temps estimé pour la tournée -->
+<div class="tourTime">
+    <t class="tourTimeText">Estimated tour time :</t>
+    <t class="tourTimeText" id="tourTimeValue">--:--</t>
+</div>
+
+<!-- Bouton pour récupérer et afficher la tournée optimisée -->
+<div class="rightBlock">
+    <div class="stopListBox"></div>
+    <button onclick="fetchOptimalTour()" class="confirmButton">Show Optimal Tour</button>
+</div>
+</body>
+</html>

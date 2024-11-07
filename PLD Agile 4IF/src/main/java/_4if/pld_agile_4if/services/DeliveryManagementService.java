@@ -6,10 +6,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DeliveryManagementService {
-    private List<Delivery> deliveries;
+    private List<Delivery> deliveries = new ArrayList<>();
     private List<RoadSegment> optimalTour;
     private final TourCalculatorService tourCalculatorService;
     private CityMap cityMap; // The current city map
@@ -57,9 +58,12 @@ public class DeliveryManagementService {
     }
 
     // Remove a delivery by its ID
-    public void removeDelivery(long deliveryId) {
-        deliveries.removeIf(delivery -> delivery.getId() == deliveryId);
-        recalculateTour();
+    public boolean removeDelivery(long deliveryId) {
+        boolean removed = deliveries.removeIf(delivery -> delivery.getId() == deliveryId);
+        if (removed) {
+            recalculateTour();
+        }
+        return removed;
     }
 
     // Modify an existing delivery by its ID
@@ -76,14 +80,20 @@ public class DeliveryManagementService {
         }
     }
 
-    // Recalculate the optimal tour based on the updated delivery list
+    // Recalcule le tour optimal et les estimations de temps en fonction de la liste de livraisons mise à jour
     private void recalculateTour() {
         if (cityMap != null && !deliveries.isEmpty()) {
-            this.optimalTour = tourCalculatorService.calculateOptimalTour(cityMap, deliveries, warehouseId);
-            // Here you can handle the result, for example, updating the UI or storing the tour
+            // Appel de la méthode `calculateOptimalTourWithEstimates` pour obtenir le tour optimal et les estimations de temps
+            Map<String, Object> result = tourCalculatorService.calculateOptimalTourWithEstimates(cityMap, deliveries, warehouseId);
+            List<RoadSegment> optimalTour = (List<RoadSegment>) result.get("optimalTour");
+            List<Map<String, Object>> timeEstimates = (List<Map<String, Object>>) result.get("timeEstimates");
+
+            // Affichage ou manipulation des résultats pour l'interface ou le stockage
             System.out.println("Optimal tour recalculated: " + optimalTour);
+            System.out.println("Time estimates: " + timeEstimates);
         }
     }
+
 
     // Get the current list of deliveries
     public List<Delivery> getAllDeliveries() {
