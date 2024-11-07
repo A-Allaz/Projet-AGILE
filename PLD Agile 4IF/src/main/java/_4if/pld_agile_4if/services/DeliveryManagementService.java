@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Service
 public class DeliveryManagementService {
-    private List<Delivery> deliveries;
+    private List<Delivery> deliveries = new ArrayList<>();
     private List<RoadSegment> optimalTour;
     private final TourCalculatorService tourCalculatorService;
     private CityMap cityMap; // The current city map
