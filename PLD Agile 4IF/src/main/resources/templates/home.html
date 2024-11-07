@@ -10,60 +10,6 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" defer></script>
     <script th:src="@{/js/map.js}" defer></script>
     <script th:src="@{/js/home.js}" defer></script>
-    <style>
-        #map {
-            height: 100%;
-            width: 100%;
-        }
-        .deliveriesListBox {
-            border: 1px solid #ccc;
-            padding: 10px;
-            overflow : auto;
-            border-radius: 5px;
-        }
-        .delivery-item {
-            border: 1px solid #ddd;
-            margin: 5px;
-            padding: 8px;
-            border-radius: 4px;
-        }
-
-        .delivery-item:hover {
-            background-color: #f1f1f1;
-        }
-
-        .stopListBox {
-            border: 1px solid #ccc;
-            padding: 10px;
-            overflow : auto;
-            border-radius: 5px;
-        }
-
-        .stopListBox {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 10px 0;
-            max-width: 400px;
-            font-family: Arial, sans-serif;
-        }
-
-        .estimate-item {
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
-            font-size: 14px;
-        }
-
-        .estimate-item:last-child {
-            border-bottom: none;
-        }
-
-        .time, .distance {
-            font-weight: bold;
-            display: inline-block;
-            margin-right: 10px;
-        }
-    </style>
 </head>
 <body>
 <div class="leftBlock">
@@ -104,7 +50,7 @@
 <!-- Bouton pour récupérer et afficher la tournée optimisée -->
 <div class="rightBlock">
     <div class="stopListBox"></div>
-    <button onclick="fetchOptimalTour()" class="confirmButton">Show Optimal Tour</button>
+    <button onclick="fetchOptimalTour()" class="confirmButton">Show Tour</button>
 </div>
 </body>
 </html>
