@@ -1,18 +1,19 @@
 package _4if.pld_agile_4if.models;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Route {
 
-    private ArrayList<RoadSegment> stopPoints;
+    private List<RoadSegment> stopPoints;
 
     // Constructor
-    public Route(ArrayList<RoadSegment> stopPoints) {
+    public Route(List<RoadSegment> stopPoints) {
         this.stopPoints = stopPoints;
     }
 
     // Getters and Setters
-    public ArrayList<RoadSegment> getStopPoints() {
+    public List<RoadSegment> getStopPoints() {
         return stopPoints;
     }
 

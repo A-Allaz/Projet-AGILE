@@ -1,9 +1,6 @@
 package _4if.pld_agile_4if.controllers;
 
-import _4if.pld_agile_4if.models.CityMap;
-import _4if.pld_agile_4if.models.Delivery;
-import _4if.pld_agile_4if.models.RoadSegment;
-import _4if.pld_agile_4if.models.Warehouse;
+import _4if.pld_agile_4if.models.*;
 import _4if.pld_agile_4if.services.DeliveryManagementService;
 import _4if.pld_agile_4if.services.TourCalculatorService;
 import _4if.pld_agile_4if.services.XMLParsingService;
@@ -35,6 +32,24 @@ public class MainController {
     public String index() {
         return "home";
     }
+
+    // Initialiser les livreurs avec un nombre fixe au lancement
+    @PostMapping("/initializeCouriers")
+    @ResponseBody
+    public Map<String, String> initializeCouriers(@RequestParam("count") int count) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            deliveryManagementService.initializeCouriers(count);
+            response.put("status", "success");
+            response.put("message", "Couriers initialized successfully with count: " + count);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Error initializing couriers: " + e.getMessage());
+        }
+        return response;
+    }
+
 
     // Endpoint pour charger le fichier XML de la carte
     @PostMapping("/uploadMap")
@@ -113,6 +128,55 @@ public class MainController {
         }
         return response;
     }
+
+    // Endpoint pour assigner une livraison à un livreur
+    @PostMapping("/assignDeliveryToCourier")
+    @ResponseBody
+    public Map<String, String> assignDeliveryToCourier(
+            @RequestParam("courierId") int courierId,
+            @RequestParam("deliveryId") long deliveryId) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            boolean success = deliveryManagementService.assignDeliveryToCourier(courierId, deliveryId);
+            if (success) {
+                response.put("status", "success");
+                response.put("message", "Delivery assigned to courier successfully.");
+            } else {
+                response.put("status", "error");
+                response.put("message", "Assignment failed. Delivery or courier not found.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Error assigning delivery to courier: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // Endpoint pour récupérer les informations d'un livreur (livraisons et route)
+    @GetMapping("/courierInfo")
+    @ResponseBody
+    public Map<String, Object> getCourierInfo(@RequestParam("courierId") int courierId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Courier courier = deliveryManagementService.getCourierById(courierId);
+            if (courier != null) {
+                response.put("courier", courier);
+                response.put("assignedDeliveries", courier.getAssignedDeliveries());
+                response.put("currentRoute", courier.getCurrentRoute().getStopPoints());
+                response.put("status", "success");
+            } else {
+                response.put("status", "error");
+                response.put("message", "Courier not found.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Error retrieving courier info: " + e.getMessage());
+        }
+        return response;
+    }
+
 
     @GetMapping("/deliveries")
     @ResponseBody

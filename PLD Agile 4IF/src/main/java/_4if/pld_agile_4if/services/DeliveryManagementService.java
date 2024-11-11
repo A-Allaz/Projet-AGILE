@@ -5,13 +5,15 @@ import _4if.pld_agile_4if.models.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class DeliveryManagementService {
     private List<Delivery> deliveries = new ArrayList<>();
-    private List<RoadSegment> optimalTour;
+    private final List<Courier> couriers = new ArrayList<>();
+    private final Map<Integer, List<RoadSegment>> courierRoutes = new HashMap<>(); // Associe chaque livreur à son trajet optimal
     private final TourCalculatorService tourCalculatorService;
     private CityMap cityMap; // The current city map
     private long warehouseId; // The warehouse ID
@@ -20,6 +22,41 @@ public class DeliveryManagementService {
     // Constructor that injects the TourCalculatorService and initializes with the city map and warehouse ID
     public DeliveryManagementService(TourCalculatorService tourCalculatorService) {
         this.tourCalculatorService = tourCalculatorService;
+    }
+
+    // Initialize couriers
+    public void initializeCouriers(int numberOfCouriers) {
+        for (int i = 1; i <= numberOfCouriers; i++) {
+            couriers.add(new Courier(i, true, new ArrayList<>(), null)); // Disponibles par défaut
+        }
+    }
+
+    // Assign delivery to a courier
+    public boolean assignDeliveryToCourier(int courierId, long deliveryId) {
+        Courier courier = getCourierById(courierId);
+        Delivery delivery = deliveries.stream().filter(d -> d.getId() == deliveryId).findFirst().orElse(null);
+        if (courier != null && delivery != null) {
+            courier.addDelivery(delivery);
+            calculateCourierRoute(courier);
+            return true;
+        }
+        return false;
+    }
+
+    // Find a delivery by ID
+    private Delivery findDeliveryById(long deliveryId) {
+        return deliveries.stream().filter(d -> d.getId() == deliveryId).findFirst().orElse(null);
+    }
+
+    // Calculate the optimal route for a specific courier based on their deliveries
+    private void calculateCourierRoute(Courier courier) {
+        if (cityMap != null && !courier.getAssignedDeliveries().isEmpty()) {
+            Map<String, Object> result = tourCalculatorService.calculateOptimalTourWithEstimates(
+                    cityMap, courier.getAssignedDeliveries(), warehouseId);
+            List<RoadSegment> optimalTour = (List<RoadSegment>) result.get("optimalTour");
+            courier.setCurrentRoute(new Route(optimalTour)); // Met à jour le trajet actuel du livreur
+            courierRoutes.put(courier.getId(), optimalTour);
+        }
     }
 
     // Initialize the city map and warehouse ID when loading a new city map
@@ -37,7 +74,7 @@ public class DeliveryManagementService {
         else {
             deliveries.addAll(deliveryProgram);
         }
-        recalculateTour();
+        // recalculateTour();
     }
 
     // Collect and stock the deliveries assigned to a courier
@@ -45,37 +82,36 @@ public class DeliveryManagementService {
         deliveries = selectedCourier.getAssignedDeliveries();
     }
 
-   public void assignCourier(Courier courier, Delivery delivery){
-        courier.addDelivery(delivery);
-        loadDeliveries(courier);
-        recalculateTour();
-    }
-
     // Add a new delivery
     public void addDelivery(Delivery delivery) {
         deliveries.add(delivery);
-        recalculateTour();
     }
 
-    // Remove a delivery by its ID
+    // Remove a delivery by its ID and reassigns affected couriers
     public boolean removeDelivery(long deliveryId) {
-        boolean removed = deliveries.removeIf(delivery -> delivery.getId() == deliveryId);
-        if (removed) {
-            recalculateTour();
+        for (Courier courier : couriers) {
+            boolean removed = courier.getAssignedDeliveries().removeIf(d -> d.getId() == deliveryId);
+            if (removed) {
+                calculateCourierRoute(courier); // Recalculer le trajet du livreur
+                return true;
+            }
         }
-        return removed;
+        return false;
     }
 
     // Modify an existing delivery by its ID
+    // Modify an existing delivery and recalculate routes for assigned courier
     public void modifyDelivery(long deliveryId, Delivery updatedDelivery) {
-        for (Delivery delivery : deliveries) {
-            if (delivery.getId() == deliveryId) {
-                delivery.setPickupLocation(updatedDelivery.getPickupLocation());
-                delivery.setDeliveryLocation(updatedDelivery.getDeliveryLocation());
-                delivery.setPickupTime(updatedDelivery.getPickupTime());
-                delivery.setDeliveryTime(updatedDelivery.getDeliveryTime());
-                recalculateTour();
-                break;
+        for (Courier courier : couriers) {
+            for (Delivery delivery : courier.getAssignedDeliveries()) {
+                if (delivery.getId() == deliveryId) {
+                    delivery.setPickupLocation(updatedDelivery.getPickupLocation());
+                    delivery.setDeliveryLocation(updatedDelivery.getDeliveryLocation());
+                    delivery.setPickupTime(updatedDelivery.getPickupTime());
+                    delivery.setDeliveryTime(updatedDelivery.getDeliveryTime());
+                    calculateCourierRoute(courier); // Recalculer le trajet du livreur
+                    break;
+                }
             }
         }
     }
@@ -94,6 +130,19 @@ public class DeliveryManagementService {
         }
     }
 
+    // Get all couriers
+    public List<Courier> getAllCouriers() {
+        return couriers;
+    }
+
+    // Get the route for a specific courier
+    public List<RoadSegment> getCourierRoute(int courierId) {
+        return courierRoutes.getOrDefault(courierId, new ArrayList<>());
+    }
+
+    public Courier getCourierById(int courierId) {
+        return couriers.stream().filter(c -> c.getId() == courierId).findFirst().orElse(null);
+    }
 
     // Get the current list of deliveries
     public List<Delivery> getAllDeliveries() {
