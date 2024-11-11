@@ -34,12 +34,16 @@ public class DeliveryManagementService {
     // Assign delivery to a courier
     public boolean assignDeliveryToCourier(int courierId, long deliveryId) {
         Courier courier = getCourierById(courierId);
-        Delivery delivery = deliveries.stream().filter(d -> d.getId() == deliveryId).findFirst().orElse(null);
+        Delivery delivery = findDeliveryById(deliveryId);
+
         if (courier != null && delivery != null) {
             courier.addDelivery(delivery);
+            delivery.setCourier(courier);
             calculateCourierRoute(courier);
             return true;
         }
+        System.out.println("Courier " + courier.toString());
+        System.out.println("Delivery " + delivery.toString());
         return false;
     }
 
@@ -92,11 +96,14 @@ public class DeliveryManagementService {
         for (Courier courier : couriers) {
             boolean removed = courier.getAssignedDeliveries().removeIf(d -> d.getId() == deliveryId);
             if (removed) {
+                deliveries.removeIf(d -> d.getId() == deliveryId);
                 calculateCourierRoute(courier); // Recalculer le trajet du livreur
                 return true;
             }
         }
-        return false;
+
+        boolean removed = deliveries.removeIf(d -> d.getId() == deliveryId);
+        return removed;
     }
 
     // Modify an existing delivery by its ID
@@ -112,6 +119,16 @@ public class DeliveryManagementService {
                     calculateCourierRoute(courier); // Recalculer le trajet du livreur
                     break;
                 }
+            }
+        }
+
+        for (Delivery delivery : deliveries) {
+            if (delivery.getId() == deliveryId) {
+                delivery.setPickupLocation(updatedDelivery.getPickupLocation());
+                delivery.setDeliveryLocation(updatedDelivery.getDeliveryLocation());
+                delivery.setPickupTime(updatedDelivery.getPickupTime());
+                delivery.setDeliveryTime(updatedDelivery.getDeliveryTime());
+                break;
             }
         }
     }

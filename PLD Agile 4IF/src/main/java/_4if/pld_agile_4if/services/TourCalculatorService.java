@@ -11,7 +11,7 @@ import java.util.*;
 
 @Service
 public class TourCalculatorService {
-
+    private int currentCapacity;
     private static final double COURIER_SPEED_KMH = 15.0;  // Vitesse en km/h
 
     // Méthode principale pour calculer le meilleur tour
@@ -121,6 +121,7 @@ public class TourCalculatorService {
         Set<Long> visitedPickups = new HashSet<>();
         Set<Long> visitedDeliveries = new HashSet<>();
         long currentLocation = wareHouseId;
+        this.currentCapacity = 0;
 
         tour.add(currentLocation);
 
@@ -143,6 +144,8 @@ public class TourCalculatorService {
     private long findNextLocation(Map<Long, Map<Long, Double>> subGraph, long currentLocation, List<Delivery> deliveries, Set<Long> visitedPickups, Set<Long> visitedDeliveries) {
         long nextLocation = -1; // Initialisation de la prochaine destination
         Double shortestDistance = Double.MAX_VALUE; // La distance la plus courte sera mise à jour au fur et à mesure
+        Double shortestDistanceToDelivery = Double.MAX_VALUE; // La distance la plus courte vers une livraison (pour gérer la capacité)
+        int type = -1; // 0 si Pickup 1 si Delivery
 
         // Parcourir les livraisons pour trouver la prochaine destination valide (pickup ou livraison)
         for (Delivery delivery : deliveries) {
@@ -150,10 +153,11 @@ public class TourCalculatorService {
             long deliveryLocation = delivery.getDeliveryLocation();
 
             // Si le pickup n'a pas encore été visité, on considère cette option
-            if (!visitedPickups.contains(pickupLocation)) {
+            if (!visitedPickups.contains(pickupLocation) && currentCapacity < 5 ) {
                 Double distanceToPickup = subGraph.get(currentLocation).get(pickupLocation);
                 if (distanceToPickup != null && distanceToPickup < shortestDistance) {
                     nextLocation = pickupLocation; // On choisit ce pickup
+                    type = 0;
                     shortestDistance = distanceToPickup; // On met à jour la distance minimale
                 }
             }
@@ -162,11 +166,26 @@ public class TourCalculatorService {
                 Double distanceToDelivery = subGraph.get(currentLocation).get(deliveryLocation);
                 if (distanceToDelivery != null && distanceToDelivery < shortestDistance) {
                     nextLocation = deliveryLocation; // On choisit cette livraison
+                    type = 1;
                     shortestDistance = distanceToDelivery; // On met à jour la distance minimale
+                    shortestDistanceToDelivery = distanceToDelivery;
                 }
+
             }
         }
 
+        if (type == 0)
+        {
+            this.currentCapacity += 1;
+        }
+        if (type == 1)
+        {
+            this.currentCapacity -= 1;
+        }
+        else
+        {
+            System.out.println("currentCapacity = -1");
+        }
         // Retourner la prochaine destination trouvée (ou -1 si quelque chose se passe mal, mais cela ne devrait jamais arriver)
         return nextLocation;
     }
