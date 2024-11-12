@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Delivery {
 
     private static final AtomicLong idGenerator = new AtomicLong(0);
-    private long id;  // Nouvel attribut ID généré automatiquement
+    private int id;  // Nouvel attribut ID généré automatiquement
     private long pickupLocation;
     private long deliveryLocation;
     private int pickupTime;
@@ -21,11 +21,11 @@ public class Delivery {
 
     // Constructor
     public Delivery() {
-        this.id = idGenerator.incrementAndGet();  // Générer un ID unique
+        this.id = (int) idGenerator.incrementAndGet();  // Générer un ID unique
     }
 
     public Delivery(long pickupLocation, long deliveryLocation, int pickupTime, int deliveryTime) {
-        this.id = idGenerator.incrementAndGet();  // Générer un ID unique
+        this.id = (int) idGenerator.incrementAndGet();  // Générer un ID unique
         this.pickupLocation = pickupLocation;
         this.deliveryLocation = deliveryLocation;
         this.pickupTime = pickupTime;
@@ -33,7 +33,7 @@ public class Delivery {
     }
 
     public Delivery(long pickupLocation, long deliveryLocation, int pickupTime, int deliveryTime, Courier courier, Route route) {
-        this.id = idGenerator.incrementAndGet();  // Générer un ID unique
+        this.id = (int) idGenerator.incrementAndGet();  // Générer un ID unique
         this.pickupLocation = pickupLocation;
         this.deliveryLocation = deliveryLocation;
         this.pickupTime = pickupTime;
@@ -43,7 +43,7 @@ public class Delivery {
     }
 
     // Getters and Setters
-    public long getId() {
+    public int getId() {
         return id;
     }
 

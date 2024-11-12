@@ -32,7 +32,7 @@ public class DeliveryManagementService {
     }
 
     // Assign delivery to a courier
-    public boolean assignDeliveryToCourier(int courierId, long deliveryId) {
+    public boolean assignDeliveryToCourier(int courierId, int deliveryId) {
         Courier courier = getCourierById(courierId);
         Delivery delivery = findDeliveryById(deliveryId);
 
@@ -43,12 +43,13 @@ public class DeliveryManagementService {
             return true;
         }
         System.out.println("Courier " + courier.toString());
+        System.out.println(deliveries);
         System.out.println("Delivery " + delivery.toString());
         return false;
     }
 
     // Find a delivery by ID
-    private Delivery findDeliveryById(long deliveryId) {
+    private Delivery findDeliveryById(int deliveryId) {
         return deliveries.stream().filter(d -> d.getId() == deliveryId).findFirst().orElse(null);
     }
 

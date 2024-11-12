@@ -134,7 +134,7 @@ public class MainController {
     @ResponseBody
     public Map<String, String> assignDeliveryToCourier(
             @RequestParam("courierId") int courierId,
-            @RequestParam("deliveryId") long deliveryId) {
+            @RequestParam("deliveryId") int deliveryId) {
         Map<String, String> response = new HashMap<>();
         try {
             boolean success = deliveryManagementService.assignDeliveryToCourier(courierId, deliveryId);

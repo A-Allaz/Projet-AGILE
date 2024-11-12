@@ -40,6 +40,7 @@ public class TourCalculatorServiceTest {
         // Setting up warehouse and initializing cityMap in DeliveryManagementService
         cityMap.setWarehouse(xmlParsingService.parseWarehouse(deliveryFile));
         deliveryManagementService.initializeCityMap(cityMap, cityMap.getWarehouse().getAddress());
+        deliveryManagementService.addDeliveryProgram(deliveries);
     }
 
     @Test
@@ -101,6 +102,7 @@ public class TourCalculatorServiceTest {
         // Assign a delivery to courier 1
         Delivery deliveryToAssign = deliveries.get(0);
         Courier courier = couriers.get(0);
+
         deliveryManagementService.assignDeliveryToCourier(courier.getId(), deliveryToAssign.getId());
 
         // Check that the delivery is assigned
