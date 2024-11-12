@@ -94,10 +94,8 @@ public class MainController {
             Warehouse warehouse = xmlParsingService.parseWarehouse(tempFile);
             cityMap.setWarehouse(warehouse);
 
-            // Ajouter les livraisons et recalculer les tournées
-            for (Delivery delivery : deliveries) {
-                deliveryManagementService.addDelivery(delivery);
-            }
+            // Ajouter les livraisons
+            deliveryManagementService.addDeliveryProgram(deliveries);
 
             return "Delivery tour uploaded successfully!";
         } catch (Exception e) {
@@ -109,15 +107,13 @@ public class MainController {
     // Endpoint pour récupérer les données des tournées optimisées
     @GetMapping("/optimalTour")
     @ResponseBody
-    public Map<String, Object> getOptimalTour() {
+    public Map<String, Object> getOptimalTour(
+            @RequestParam("courierId") int courierId) {
         Map<String, Object> response = new HashMap<>();
         try {
-            List<Delivery> deliveries = deliveryManagementService.getAllDeliveries();
-
-            // Appel de la méthode `calculateOptimalTourWithEstimates` pour obtenir le tour optimal et les estimations de temps
-            Map<String, Object> result = tourCalculatorService.calculateOptimalTourWithEstimates(cityMap, deliveries, cityMap.getWarehouse().getAddress());
-            List<RoadSegment> optimalTour = (List<RoadSegment>) result.get("optimalTour");
-            List<Map<String, Object>> timeEstimates = (List<Map<String, Object>>) result.get("timeEstimates");
+            deliveryManagementService.calculateCourierRoute(deliveryManagementService.getCourierById(courierId));
+            List<RoadSegment> optimalTour = deliveryManagementService.getCourierRoute(courierId);
+            List<Map<String, Object>> timeEstimates = deliveryManagementService.getCourierRouteTimeEstimates(courierId);
 
             response.put("optimalTour", optimalTour);
             response.put("timeEstimates", timeEstimates);
@@ -200,7 +196,8 @@ public class MainController {
             @RequestParam("pickupLocation") long pickupLocation,
             @RequestParam("deliveryLocation") long deliveryLocation,
             @RequestParam("pickupTime") int pickupTime,
-            @RequestParam("deliveryTime") int deliveryTime) {
+            @RequestParam("deliveryTime") int deliveryTime,
+            @RequestParam("courierId") int courierId) {
         Map<String, String> response = new HashMap<>();
         try {
             // Création d'une nouvelle instance de livraison
@@ -212,6 +209,7 @@ public class MainController {
 
             // Ajout de la livraison via le service
             deliveryManagementService.addDelivery(newDelivery);
+            deliveryManagementService.assignDeliveryToCourier(courierId, newDelivery.getId());
 
             response.put("status", "success");
             response.put("message", "Delivery added successfully!");

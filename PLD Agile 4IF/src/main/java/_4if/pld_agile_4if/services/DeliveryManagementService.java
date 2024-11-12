@@ -13,7 +13,7 @@ import java.util.Map;
 public class DeliveryManagementService {
     private List<Delivery> deliveries = new ArrayList<>();
     private final List<Courier> couriers = new ArrayList<>();
-    private final Map<Integer, List<RoadSegment>> courierRoutes = new HashMap<>(); // Associe chaque livreur à son trajet optimal
+    private final Map<Integer, Map<List<RoadSegment>, List<Map<String, Object>>>> courierRoutesAndTimeEstimates = new HashMap<>(); // Associe chaque livreur à son trajet optimal
     private final TourCalculatorService tourCalculatorService;
     private CityMap cityMap; // The current city map
     private long warehouseId; // The warehouse ID
@@ -54,13 +54,14 @@ public class DeliveryManagementService {
     }
 
     // Calculate the optimal route for a specific courier based on their deliveries
-    private void calculateCourierRoute(Courier courier) {
+    public void calculateCourierRoute(Courier courier) {
         if (cityMap != null && !courier.getAssignedDeliveries().isEmpty()) {
             Map<String, Object> result = tourCalculatorService.calculateOptimalTourWithEstimates(
                     cityMap, courier.getAssignedDeliveries(), warehouseId);
             List<RoadSegment> optimalTour = (List<RoadSegment>) result.get("optimalTour");
+            List<Map<String, Object>> timeEstimates = (List<Map<String, Object>>) result.get("timeEstimates");
             courier.setCurrentRoute(new Route(optimalTour)); // Met à jour le trajet actuel du livreur
-            courierRoutes.put(courier.getId(), optimalTour);
+            courierRoutesAndTimeEstimates.put(courier.getId(), Map.of(optimalTour, timeEstimates));
         }
     }
 
@@ -79,7 +80,6 @@ public class DeliveryManagementService {
         else {
             deliveries.addAll(deliveryProgram);
         }
-        // recalculateTour();
     }
 
     // Collect and stock the deliveries assigned to a courier
@@ -134,20 +134,6 @@ public class DeliveryManagementService {
         }
     }
 
-    // Recalcule le tour optimal et les estimations de temps en fonction de la liste de livraisons mise à jour
-    private void recalculateTour() {
-        if (cityMap != null && !deliveries.isEmpty()) {
-            // Appel de la méthode `calculateOptimalTourWithEstimates` pour obtenir le tour optimal et les estimations de temps
-            Map<String, Object> result = tourCalculatorService.calculateOptimalTourWithEstimates(cityMap, deliveries, warehouseId);
-            List<RoadSegment> optimalTour = (List<RoadSegment>) result.get("optimalTour");
-            List<Map<String, Object>> timeEstimates = (List<Map<String, Object>>) result.get("timeEstimates");
-
-            // Affichage ou manipulation des résultats pour l'interface ou le stockage
-            System.out.println("Optimal tour recalculated: " + optimalTour);
-            System.out.println("Time estimates: " + timeEstimates);
-        }
-    }
-
     // Get all couriers
     public List<Courier> getAllCouriers() {
         return couriers;
@@ -155,7 +141,11 @@ public class DeliveryManagementService {
 
     // Get the route for a specific courier
     public List<RoadSegment> getCourierRoute(int courierId) {
-        return courierRoutes.getOrDefault(courierId, new ArrayList<>());
+        Map<List<RoadSegment>, List<Map<String, Object>>> routeAndEstimates = courierRoutesAndTimeEstimates.get(courierId);
+        if (routeAndEstimates != null && !routeAndEstimates.isEmpty()) {
+            return routeAndEstimates.keySet().iterator().next();
+        }
+        return new ArrayList<>();
     }
 
     public Courier getCourierById(int courierId) {
@@ -165,6 +155,19 @@ public class DeliveryManagementService {
     // Get the current list of deliveries
     public List<Delivery> getAllDeliveries() {
         return deliveries;
+    }
+
+    // Get the delivery of a specific courier
+    public List<Delivery> getCourierDeliveries(int courierId) {
+        return getCourierById(courierId).getAssignedDeliveries();
+    }
+
+    public List<Map<String, Object>> getCourierRouteTimeEstimates(int courierId) {
+        Map<List<RoadSegment>, List<Map<String, Object>>> routeAndEstimates = courierRoutesAndTimeEstimates.get(courierId);
+        if (routeAndEstimates != null && !routeAndEstimates.isEmpty()) {
+            return routeAndEstimates.values().iterator().next();
+        }
+        return new ArrayList<>();
     }
 
     // Get the city map (if needed for external use)

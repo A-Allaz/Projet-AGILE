@@ -111,6 +111,27 @@ function findNearestNode(lat, lng) {
     return nearestNode;
 }
 
+function loadCourierInfo(courierId) {
+    fetch(`/courierInfo?courierId=${courierId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                displayOptimalTour(data.currentRoute); // Affiche la route
+            } else {
+                console.error(data.message);
+                alert("Error loading courier info: " + data.message);
+            }
+        })
+        .catch(error => console.error('Error fetching courier info:', error));
+}
+
+// Rafraîchit le trajet pour le livreur actuellement sélectionné
+document.getElementById('courierSelect').addEventListener('change', (e) => {
+    const selectedCourierId = e.target.value;
+    loadCourierInfo(selectedCourierId);
+});
+
+
 function displayOptimalTour(tourSegments) {
     // Nettoyer les anciens segments de tournée
     map.eachLayer(layer => {
@@ -368,12 +389,13 @@ function loadMapPoints() {
         });
 }
 
-function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliveryTime) {
+function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliveryTime, courierId) {
     const requestBody = new URLSearchParams({
         pickupLocation: pickupLocation,
         deliveryLocation: deliveryLocation,
         pickupTime: pickupTime,
-        deliveryTime: deliveryTime
+        deliveryTime: deliveryTime,
+        courierId: courierId
     });
 
     console.log('Request Body:', requestBody.toString());
@@ -400,7 +422,8 @@ function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliv
                     pickupLocation: pickupLocation,
                     deliveryLocation: deliveryLocation,
                     pickupTime: pickupTime,
-                    deliveryTime: deliveryTime
+                    deliveryTime: deliveryTime,
+                    courierId: courierId
                 };
                 deliveries.push(newDelivery);
 
@@ -441,9 +464,6 @@ function initializeMapClickListener() {
             elementIdPickup = 'pickupLocationInput';
             elementIdDelivery = 'deliveryLocationInput';
         }
-
-        console.log(elementIdDelivery);
-        console.log(elementIdPickup);
 
         if (isSelectingPickup) {
             const pickupInput = document.getElementById(elementIdPickup);
