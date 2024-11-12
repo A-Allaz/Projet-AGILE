@@ -49,8 +49,25 @@
 
 <!-- Bouton pour récupérer et afficher la tournée optimisée -->
 <div class="rightBlock">
+    <div class="courierSelect">
+        <select id="courierSelect">
+            <option value="" disabled selected>Select a Courier</option>
+        </select>
+    </div>
     <div class="stopListBox"></div>
     <button onclick="fetchOptimalTour()" class="confirmButton">Show Tour</button>
+</div>
+
+<!-- Modale pour initialiser les livreurs -->
+<div id="courierModal" class="modal">
+    <div class="modal-content">
+        <h2>Initialize Couriers</h2>
+        <form id="courierForm" onsubmit="initializeCouriers(event)">
+            <label for="courierCount">Number of couriers:</label>
+            <input type="number" id="courierCount" name="courierCount" min="1" required placeholder="Enter a number greater than 0">
+            <button type="submit" class="confirmButtonNbCouriers">Initialize</button>
+        </form>
+    </div>
 </div>
 </body>
 </html>

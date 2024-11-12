@@ -39,6 +39,13 @@ public class DeliveryManagementService {
         if (courier != null && delivery != null) {
             courier.addDelivery(delivery);
             delivery.setCourier(courier);
+
+            // Mettre à jour la liste globale des livraisons
+            updateDeliveryInList(delivery);
+
+            // Mettre à jour la liste globale des livreurs
+            updateCourierInList(courier);
+
             calculateCourierRoute(courier);
             return true;
         }
@@ -46,6 +53,30 @@ public class DeliveryManagementService {
         System.out.println(deliveries);
         System.out.println("Delivery " + delivery.toString());
         return false;
+    }
+
+    // Méthode pour mettre à jour une livraison dans la liste globale des livraisons
+    private void updateDeliveryInList(Delivery updatedDelivery) {
+        for (int i = 0; i < deliveries.size(); i++) {
+            if (deliveries.get(i).getId() == updatedDelivery.getId()) {
+                deliveries.set(i, updatedDelivery);
+                return;
+            }
+        }
+        // Ajouter si la livraison n'est pas trouvée
+        deliveries.add(updatedDelivery);
+    }
+
+    // Méthode pour mettre à jour un livreur dans la liste globale des livreurs
+    private void updateCourierInList(Courier updatedCourier) {
+        for (int i = 0; i < couriers.size(); i++) {
+            if (couriers.get(i).getId() == updatedCourier.getId()) {
+                couriers.set(i, updatedCourier);
+                return;
+            }
+        }
+        // Ajouter si le livreur n'est pas trouvé
+        couriers.add(updatedCourier);
     }
 
     // Find a delivery by ID
@@ -156,6 +187,7 @@ public class DeliveryManagementService {
     public List<Delivery> getAllDeliveries() {
         return deliveries;
     }
+
 
     // Get the delivery of a specific courier
     public List<Delivery> getCourierDeliveries(int courierId) {

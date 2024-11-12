@@ -180,6 +180,12 @@ public class MainController {
         return deliveryManagementService.getAllDeliveries();
     }
 
+    @GetMapping("/couriers")
+    @ResponseBody
+    public List<Courier> getAllCouriers() {
+        return deliveryManagementService.getAllCouriers();
+    }
+
     @GetMapping("/mapPoints")
     @ResponseBody
     public Map<String, Object> getMapPoints() {

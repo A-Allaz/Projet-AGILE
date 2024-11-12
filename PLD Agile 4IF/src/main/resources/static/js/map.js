@@ -294,6 +294,7 @@ function displayMap(fileInputId, mapContainerId, toHideElementsIds) {
             const { center, zoom } = fitMap(nodes);
             map.setView(center, zoom);
             initializeMapClickListener(); // Call after map is initialized
+            showCourierModal();
         })
         .catch(error => {
             console.error('Error loading map data:', error);
@@ -497,4 +498,53 @@ function enableDeliverySelection() {
     isSelectingPickup = false;
     isSelectingDelivery = true;
     alert("Click on the map to select the Delivery location.");
+}
+
+// Fonction pour afficher la modale de saisie du nombre de livreurs
+function showCourierModal() {
+    const modal = document.getElementById("courierModal");
+    modal.style.display = "block";
+}
+
+// Fonction pour envoyer le nombre de livreurs au serveur
+function initializeCouriers(event) {
+    event.preventDefault();  // Empêche le rechargement de la page
+
+    const courierCountInput = document.getElementById('courierCount');
+    const courierCount = parseInt(courierCountInput.value, 10);
+
+    // Validation pour vérifier que la saisie est un nombre entier positif
+    if (!Number.isInteger(courierCount) || courierCount < 1) {
+        alert("Please enter a valid number of couriers (greater than 0).");
+        courierCountInput.focus();
+        return;  // Ne pas fermer la modale
+    }
+
+    fetch('/initializeCouriers', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ count: courierCountInput.value })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                alert(data.message);
+                closeCourierModal();
+                loadCouriers();  // Optionnel : chargement des livreurs si besoin
+            } else {
+                alert("Error initializing couriers: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error initializing couriers:', error);
+            alert("Error: " + error.message);
+        });
+}
+
+// Fonction pour fermer la modale
+function closeCourierModal() {
+    const modal = document.getElementById("courierModal");
+    modal.style.display = "none";
 }

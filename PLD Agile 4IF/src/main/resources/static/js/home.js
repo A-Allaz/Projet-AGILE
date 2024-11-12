@@ -89,11 +89,9 @@ function uploadTourFile() {
         });
 }
 
-
-// Fonction pour récupérer les tournées optimisées
-    async function fetchOptimalTour() {
+async function fetchCourierTour(courierId) {
     try {
-        const response = await fetch('/optimalTour');
+        const response = await fetch(`/optimalTour?courierId=${courierId}`);
         const data = await response.json();
 
         if (data.error) {
@@ -101,16 +99,19 @@ function uploadTourFile() {
         }
 
         console.log("Optimal Tour Data:", data.optimalTour);
-
-        // Afficher la tournée optimisée
         displayOptimalTour(data.optimalTour);
         displayTimeEstimates(data.timeEstimates);
-
     } catch (error) {
-        console.error('Error fetching optimal tour:', error);
+        console.error('Error fetching optimal tour for courier:', error);
         alert("Error fetching optimal tour: " + error.message);
     }
 }
+
+// Gestionnaire d'événement pour changement de livreur
+document.getElementById('courierSelect').addEventListener('change', (e) => {
+    const selectedCourierId = e.target.value;
+    fetchCourierTour(selectedCourierId);
+});
 
 // Fonction pour récupérer et afficher les livraisons dans la div deliveriesListBox
 async function loadDeliveries() {
@@ -120,7 +121,7 @@ async function loadDeliveries() {
             throw new Error(`Failed to load deliveries: ${response.statusText}`);
         }
 
-        deliveries = (await response.json()).map((delivery, index) => ({ ...delivery, id: index + 1 }));
+        deliveries = await response.json();
         const deliveriesListBox = document.querySelector(".deliveriesListBox");
         deliveriesListBox.innerHTML = "";  // Clear any existing content
 
@@ -134,8 +135,10 @@ async function loadDeliveries() {
                 <p><strong>Delivery:</strong> ${delivery.deliveryLocation}</p>
                 <p><strong>Pickup Time:</strong> ${delivery.pickupTime}</p>
                 <p><strong>Delivery Time:</strong> ${delivery.deliveryTime}</p>
+                <p><strong>Delivery Courier:</strong> Courier ${delivery.courierId}</p>
                 <button onclick="deleteDelivery(${delivery.id})">Delete</button>
                 <button onclick="showEditForm(${delivery.id})">Modify</button>
+                <button onclick="showAssignCourierForm(${delivery.id})">Assign</button>
             `;
             deliveriesListBox.appendChild(deliveryItem);
         });
@@ -146,6 +149,40 @@ async function loadDeliveries() {
     }
 }
 
+// Fonction pour récupérer et afficher les couriers dans la div couriersDropdown
+async function loadCouriers() {
+    try {
+        const response = await fetch('/couriers');
+        if (!response.ok) {
+            throw new Error(`Failed to load couriers: ${response.statusText}`);
+        }
+
+        const couriers = await response.json();
+        const courierSelect = document.getElementById('courierSelect');
+        courierSelect.innerHTML = "";  // Réinitialiser le contenu du menu déroulant
+
+        // Ajout d'une option de sélection par défaut
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        defaultOption.textContent = "Select a Courier";
+        courierSelect.appendChild(defaultOption);
+
+        // Remplir courierSelect avec chaque livreur
+        couriers.forEach(courier => {
+            const courierItem = document.createElement("option");
+            courierItem.value = courier.id;
+            courierItem.textContent = `Courier #${courier.id}`;
+            courierSelect.appendChild(courierItem);
+        });
+
+    } catch (error) {
+        console.error('Error loading couriers:', error);
+        alert("Could not load couriers: " + error.message);
+    }
+}
+
 // Function to send a new delivery to the server
 function addNewDelivery() {
     // Get the input values
@@ -153,8 +190,10 @@ function addNewDelivery() {
     const deliveryLocationInput = document.getElementById('deliveryLocationInput');
     const pickupTimeInput = document.querySelector("input[placeholder='Pickup time:']");
     const deliveryTimeInput = document.querySelector("input[placeholder='Delivery time:']");
+    const courierSelect = document.getElementById('courierSelect'); // Sélection du livreur
 
-    if (!pickupLocationInput || !deliveryLocationInput || !pickupTimeInput || !deliveryTimeInput) {
+
+    if (!pickupLocationInput || !deliveryLocationInput || !pickupTimeInput || !deliveryTimeInput || !courierSelect) {
         alert("Please fill in all fields.");
         return;
     }
@@ -163,6 +202,7 @@ function addNewDelivery() {
     const deliveryLocation = deliveryLocationInput.value;
     const pickupTime = pickupTimeInput.value;
     const deliveryTime = deliveryTimeInput.value;
+    const courierId = courierSelect.value;
 
     // Validate the input values
     if (!pickupLocation || !deliveryLocation || !pickupTime || !deliveryTime) {
@@ -184,7 +224,7 @@ function addNewDelivery() {
     }
 
     // Call the function to send the new delivery to the back-end
-    addDeliveryToServer(nearestPickupNode.id, nearestDeliveryNode.id, pickupTime, deliveryTime);
+    addDeliveryToServer(nearestPickupNode.id, nearestDeliveryNode.id, pickupTime, deliveryTime, courierId);
 }
 
 // Fonction pour supprimer une livraison
@@ -196,6 +236,8 @@ function deleteDelivery(deliveryId) {
                 alert(data.message);
                 deliveries = deliveries.filter(d => d.id !== deliveryId);  // Remove the deleted delivery
                 loadDeliveries(); // Recharger la liste des livraisons
+                const selectedCourierId = document.getElementById('courierSelect').value;
+                fetchCourierTour(selectedCourierId);
                 loadMapPoints();  // Recharger les points sur la carte
             } else {
                 alert("Error: " + data.message);
@@ -221,6 +263,12 @@ function showEditForm(deliveryId) {
         <input type="number" id="editPickupTime" class="timeInput" style="margin-left: 5%;" placeholder="Pickup time:" value="${delivery.pickupTime}">
         <input type="number" id="editDeliveryTime" class="timeInput" style="margin-left: 10%;" placeholder="Delivery time:" value="${delivery.deliveryTime}">
         
+        <!-- Dropdown to select a courier -->
+        <label for="editCourierSelect">Courier:</label>
+        <select id="editCourierSelect" class="timeInput" style="margin-left: 5%;">
+            <!-- Les options seront ajoutées dynamiquement -->
+        </select>
+        
         <button class="confirmButton" style="margin-left: 5%;" onclick="submitEditForm(${deliveryId})">Save Changes</button>
         <button class="cancelButton" style="margin-left: 10%;" onclick="cancelEdit()">Cancel</button>
 `   ;
@@ -229,6 +277,32 @@ function showEditForm(deliveryId) {
     const deliveriesListBox = document.querySelector(".deliveriesListBox");
     deliveriesListBox.innerHTML = "";  // Clear the list
     deliveriesListBox.appendChild(editForm);
+
+    // Charger les livreurs dans le menu déroulant
+    loadCouriersIntoSelect('editCourierSelect', delivery.courier ? delivery.courier.id : null)
+}
+
+// Fonction pour charger les options de livreur dans un menu déroulant
+async function loadCouriersIntoSelect(selectId, selectedCourierId = null) {
+    try {
+        const response = await fetch('/couriers');
+        const couriers = await response.json();
+        const select = document.getElementById(selectId);
+
+        select.innerHTML = "";  // Clear existing options
+
+        couriers.forEach(courier => {
+            const option = document.createElement("option");
+            option.value = courier.id;
+            option.text = `Courier #${courier.id}`;
+            if (selectedCourierId === courier.id) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error loading couriers:", error);
+    }
 }
 
 // Function to hide the edit form and reload the list
@@ -242,14 +316,16 @@ function submitEditForm(deliveryId) {
     const deliveryLocationInput = document.getElementById('editDeliveryLocation');
     const pickupTimeInput = document.getElementById('editPickupTime');
     const deliveryTimeInput = document.getElementById('editDeliveryTime');
+    const courierSelect = document.getElementById('editCourierSelect');
 
     const pickupLocation = pickupLocationInput.value;
     const deliveryLocation = deliveryLocationInput.value;
     const pickupTime = pickupTimeInput.value;
     const deliveryTime = deliveryTimeInput.value;
+    const courierId = courierSelect.value;
 
     // Validate the input values
-    if (!pickupLocation || !deliveryLocation || !pickupTime || !deliveryTime) {
+    if (!pickupLocation || !deliveryLocation || !pickupTime || !deliveryTime || courierId) {
         alert("Please fill in all fields.");
         return;
     }
@@ -283,15 +359,16 @@ function submitEditForm(deliveryId) {
     }
 
     // Call the function to send the updated delivery to the back-end
-    updateDelivery(deliveryId, nearestPickupNode.id, nearestDeliveryNode.id, pickupTime, deliveryTime);
+    updateDelivery(deliveryId, nearestPickupNode.id, nearestDeliveryNode.id, pickupTime, deliveryTime, courierId);
 }
 
-function updateDelivery(deliveryId, pickupLocation, deliveryLocation, pickupTime, deliveryTime) {
+function updateDelivery(deliveryId, pickupLocation, deliveryLocation, pickupTime, deliveryTime, courierId) {
     const requestBody = {
         pickupLocation,
         deliveryLocation,
         pickupTime,
-        deliveryTime
+        deliveryTime,
+        courierId
     };
 
     fetch(`/updateDelivery/${deliveryId}`, {
@@ -309,10 +386,13 @@ function updateDelivery(deliveryId, pickupLocation, deliveryLocation, pickupTime
                 updatedDelivery.deliveryLocation = deliveryLocation;
                 updatedDelivery.pickupTime = pickupTime;
                 updatedDelivery.deliveryTime = deliveryTime;
+                updatedDelivery.courierId = courierId;
 
                 modyfingDelivery = false;
 
                 loadDeliveries();  // Rafraîchir la liste des livraisons
+                const selectedCourierId = document.getElementById('courierSelect').value;
+                fetchCourierTour(selectedCourierId);
                 loadMapPoints();   // Mettre à jour les points sur la carte
             } else {
                 console.error("Error:", data.message);
@@ -320,3 +400,77 @@ function updateDelivery(deliveryId, pickupLocation, deliveryLocation, pickupTime
         })
         .catch(error => console.error('Error updating delivery:', error));
 }
+
+async function showAssignCourierForm(deliveryId) {
+    const deliveryItem = document.querySelector(`.delivery-item:nth-child(${deliveryId})`);
+
+    // Créer le formulaire de sélection du livreur
+    const assignForm = document.createElement("div");
+    assignForm.classList.add("assign-form");
+
+    // Charger les livreurs
+    const response = await fetch('/couriers');
+    const couriers = await response.json();
+
+    // Ajouter le menu déroulant de sélection de livreurs
+    const courierSelect = document.createElement("select");
+    courierSelect.innerHTML = "<option value='' disabled selected>Select a Courier</option>";
+    couriers.forEach(courier => {
+        const option = document.createElement("option");
+        option.value = courier.id;
+        option.textContent = `Courier #${courier.id}`;
+        courierSelect.appendChild(option);
+    });
+
+    // Bouton pour confirmer l'assignation
+    const assignButton = document.createElement("button");
+    assignButton.textContent = "Confirm Assignment";
+    assignButton.onclick = () => {
+        const selectedCourierId = courierSelect.value;  // Obtenir la valeur sélectionnée
+        if (selectedCourierId) {
+            assignDeliveryToCourier(deliveryId, selectedCourierId);
+        } else {
+            alert("Please select a courier.");
+        }
+    };
+
+    // Ajouter le menu déroulant et le bouton au formulaire
+    assignForm.appendChild(courierSelect);
+    assignForm.appendChild(assignButton);
+
+    // Ajouter le formulaire de sélection dans l'élément de la livraison
+    deliveryItem.appendChild(assignForm);
+}
+
+async function assignDeliveryToCourier(deliveryId, courierId) {
+    if (!courierId) {
+        alert("Please select a courier.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/assignDeliveryToCourier`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                deliveryId: deliveryId,
+                courierId: courierId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+            alert(data.message);
+            loadDeliveries();  // Refresh deliveries list
+        } else {
+            alert(`Error: ${data.message}`);
+        }
+    } catch (error) {
+        console.error('Error assigning delivery to courier:', error);
+        alert("Could not assign delivery: " + error.message);
+    }
+}
+
