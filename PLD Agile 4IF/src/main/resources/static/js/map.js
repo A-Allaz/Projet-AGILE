@@ -12,7 +12,7 @@ function sleep(ms) {
 
 async function loadData() {
     try {
-        await sleep(3000); // Simulate a delay
+        await sleep(1000); // Simulate a delay
 
         const response = await fetch('/mapData');
         if (!response.ok) {
@@ -29,56 +29,16 @@ async function loadData() {
         console.log('Nodes:', nodes);
         console.log('Road Segments:', roadSegments);
 
-        // Plot the data on the map
-        // plotNodes(nodes);
-        plotRoadSegments(roadSegments);
-
     } catch (error) {
         console.error('Error loading data:', error);
         alert("Error loading data: " + error.message); // Display user-friendly error
     }
 }
 
-
-function checkAndPlotSegments() {
-    if (nodes && roadSegments) {
-        plotRoadSegments(roadSegments);
-    }
-}
-
-// Plot the nodes on the map
-function plotNodes(nodes) {
-    nodes.forEach(node => {
-        L.circleMarker([node.latitude, node.longitude], {
-            radius: 2,
-            color: 'black',
-            fillColor: 'black',
-            fillOpacity: 1
-        }).addTo(map);
-    });
-}
-
-// Plot the road segments on the map
-function plotRoadSegments(roadSegments) {
-    roadSegments.forEach(function(segment) {
-        const originNode = nodes.find(node => node.id === segment.origin);
-        const destinationNode = nodes.find(node => node.id === segment.destination);
-
-        if (originNode && destinationNode) {
-            L.polyline([
-                [originNode.latitude, originNode.longitude],
-                [destinationNode.latitude, destinationNode.longitude]
-            ], {
-                color: "rgb(70, 70, 70)",
-                weight: 3
-            }).addTo(map);
-        }
-    });
-}
-
 function fitMap(nodes) {
     var southwest = {lat: 90.0, lon: 180.0};
     var northeast = {lat: -90.0, lon: -180.0};
+
 
     for(var nodeId in nodes){
         var node = nodes[nodeId];
@@ -88,12 +48,32 @@ function fitMap(nodes) {
         node.longitude < southwest.lon ? southwest.lon = node.longitude : null;
     }
 
-    var center = [(northeast.lat + southwest.lat) / 2, (northeast.lon + southwest.lon) / 2]
-    var zoom = map.getBoundsZoom(L.latLngBounds(southwest, northeast))
+    const swLatLng = L.latLng(southwest.lat, southwest.lon);
+    const neLatLng = L.latLng(northeast.lat, northeast.lon);
+
+    const bounds = L.latLngBounds(swLatLng, neLatLng);
+
+    L.rectangle(bounds, {
+        color: "rgb(50, 50, 50)",
+        weight: 2,
+        fill: false,
+        dashArray: "5, 5"
+    }).addTo(map);
+
+
+    // Fit the map view to the bounds of the rectangle
+    map.fitBounds(bounds);
+
+
+    // Return center and zoom for additional use if needed
+    const center = [(northeast.lat + southwest.lat) / 2, (northeast.lon + southwest.lon) / 2];
+    const zoom = map.getBoundsZoom(bounds);
+
 
     console.log(southwest, northeast)
     return {center: center, zoom: zoom};
 }
+
 
 // Function to find the nearest node to a given latitude and longitude
 function findNearestNode(lat, lng) {
@@ -112,11 +92,12 @@ function findNearestNode(lat, lng) {
 }
 
 function loadCourierInfo(courierId) {
-    fetch(`/courierInfo?courierId=${courierId}`)
+    fetch(`/optimalTour?courierId=${courierId}`)
         .then(response => response.json())
         .then(data => {
             if (data.status === "success") {
-                displayOptimalTour(data.currentRoute); // Affiche la route
+                displayOptimalTour(data.optimalTour); // Affiche la route
+                displayTimeEstimates(data.timeEstimates, courierId)
             } else {
                 console.error(data.message);
                 alert("Error loading courier info: " + data.message);
@@ -156,7 +137,7 @@ function displayOptimalTour(tourSegments) {
     });
 }
 
-function displayTimeEstimates(timeEstimates) {
+function displayTimeEstimates(timeEstimates, courierId) {
     console.log(timeEstimates);
     const timeEstimatesDiv = document.querySelector(".stopListBox");
     timeEstimatesDiv.innerHTML = ""; // Effacer tout contenu existant
@@ -178,8 +159,17 @@ function displayTimeEstimates(timeEstimates) {
             name: estimate.segment.name
         });
 
+        let deliveriesCourier = [];
+        for (let delivery of deliveries)
+        {
+            if (delivery.courier !== null && delivery.courier.id == courierId)
+            {
+                deliveriesCourier.push(delivery);
+            }
+        }
+
         // Vérifier si le segment est un point de destination (on retrouve segment.destination dans deliveries)
-        if (deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination)) {
+        if (deliveriesCourier.some(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination)) {
 
         // Enregistrer l'heure d'arrivée pour ce groupe
             groupEndTime = estimate.arrivalTime;
@@ -190,7 +180,7 @@ function displayTimeEstimates(timeEstimates) {
 
             // Ajouter en-tête de groupe avec heure de départ
             groupItem.innerHTML = `
-                <p><strong>Aller au ${deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination) ? "Pickup" : "Delivery"} ${deliveries.find(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination).id} : départ ${groupStartTime}</strong></p>
+                <p><strong>Aller au ${deliveriesCourier.some(delivery => delivery.pickupLocation === estimate.segment.destination) ? "Pickup" : "Delivery"} ${deliveriesCourier.find(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination).id} : départ ${groupStartTime}</strong></p>
                 <p><strong>Détails :</strong></p>
             `;
 
@@ -202,8 +192,8 @@ function displayTimeEstimates(timeEstimates) {
                 } else {
                     const detailItem = document.createElement("p");
                     detailItem.innerHTML = `
-            ${segment.name} ------------------- ${segment.length.toFixed(1)} m<br>
-        `;
+                    ${segment.name} ${'-'}\t${segment.length.toFixed(1)} m<br>
+                `;
                     groupItem.appendChild(detailItem);
                 }
             });
@@ -240,7 +230,7 @@ function displayTimeEstimates(timeEstimates) {
             } else {
                 const detailItem = document.createElement("p");
                 detailItem.innerHTML = `
-                    ${segment.name} ${'-'.repeat(50 - segment.name.length)}\t${segment.length.toFixed(1)} m<br>
+                    ${segment.name} ${'-'}\t${segment.length.toFixed(1)} m<br>
                 `;
                 returnItem.appendChild(detailItem);
             }
@@ -318,7 +308,6 @@ function sendFileToServer(file, uploadUrl) {
         })
         .then(data => {
             console.log('File upload successful:', data);
-            alert(data);  // Display the response in an alert
         })
         .catch(error => {
             console.error('Error uploading file:', error);
@@ -339,9 +328,6 @@ function loadMapPoints() {
             map.removeLayer(layer);
         }
     });
-
-
-    alert("Loading map points...");
 
     fetch('/mapPoints')
         .then(response => response.json())
@@ -390,13 +376,12 @@ function loadMapPoints() {
         });
 }
 
-function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliveryTime, courierId) {
+function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliveryTime) {
     const requestBody = new URLSearchParams({
         pickupLocation: pickupLocation,
         deliveryLocation: deliveryLocation,
         pickupTime: pickupTime,
         deliveryTime: deliveryTime,
-        courierId: courierId
     });
 
     console.log('Request Body:', requestBody.toString());
@@ -417,16 +402,6 @@ function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliv
         .then(data => {
             if (data.status === "success") {
                 console.log(data.message);
-                // Add the new delivery in deliveries variable with an id
-                const newDelivery = {
-                    id: deliveries.length + 1,
-                    pickupLocation: pickupLocation,
-                    deliveryLocation: deliveryLocation,
-                    pickupTime: pickupTime,
-                    deliveryTime: deliveryTime,
-                    courierId: courierId
-                };
-                deliveries.push(newDelivery);
 
                 // Clear the input fields
                 document.getElementById('pickupLocationInput').value = "";
@@ -528,7 +503,6 @@ function initializeCouriers(event) {
         .then(response => response.json())
         .then(data => {
             if (data.status === "success") {
-                alert(data.message);
                 closeCourierModal();
                 loadCouriers();  // Optionnel : chargement des livreurs si besoin
             } else {
@@ -545,4 +519,61 @@ function initializeCouriers(event) {
 function closeCourierModal() {
     const modal = document.getElementById("courierModal");
     modal.style.display = "none";
+}
+
+function resetPage() {
+    // Réinitialisation des éléments de la page
+    document.getElementById('tourFileTitle').innerText = 'Select a file';
+    document.getElementById('mapFileTitle').innerText = 'Select a file';
+    document.getElementById('tourTimeValue').innerText = '--:--';
+    document.getElementById('courierSelect').value = '';
+
+    // Vider les listes
+    document.querySelector('.deliveriesListBox').innerHTML = '';
+    document.querySelector('.stopListBox').innerHTML = '';
+
+    // Réinitialisation des champs de saisie
+    document.getElementById('pickupLocationInput').value = '';
+    document.getElementById('deliveryLocationInput').value = '';
+    document.querySelectorAll('.timeInput').forEach(input => input.value = '');
+
+    // Réinitialiser les objets de la page
+    nodes = null;  // Réinitialiser les nodes
+    roadSegments = null;  // Réinitialiser les segments de route
+    deliveries = null;  // Réinitialiser les livraisons
+
+    // Vérifier si une carte existe déjà et la détruire
+    if (map) {
+        map.remove();
+    }
+
+    // Vider la div mapBlock
+    const mapBlock = document.getElementById('mapContainer');
+    const mapFileInputContainer = `
+        <!-- Import du fichier XML pour la carte -->
+        <input type="file" style="display: none;" id="mapFileInput" accept=".xml" onchange="updateFileName('mapFileInput', 'mapFileTitle', 'confirmMapButton')">
+        <button id="mapFileButton" onclick="document.getElementById('mapFileInput').click();" class="mapButton">Import .xml delivery map file</button>
+        <text id="mapFileTitle" style="margin-top: 2%;">Select a file</text>
+        <button id="confirmMapButton" class="confirmButton" onclick="displayMap('mapFileInput', 'mapContainer', ['mapFileButton', 'mapFileTitle', 'confirmMapButton'])">Confirm Map</button>
+    `;
+
+    // Réinjecter le contenu dans la div mapBlock
+    mapBlock.innerHTML = mapFileInputContainer;
+
+
+    // Appeler le backend pour réinitialiser les données
+    fetch('/resetControllerData', {
+        method: 'POST'
+    })
+        .then(response => {
+            if (response.ok) {
+                alert("Page reset successfully.");
+            } else {
+                alert("Failed to reset page data.");
+            }
+        })
+        .catch(error => {
+            console.error("Error resetting page data:", error);
+            alert("An error occurred while resetting the page.");
+        });
 }

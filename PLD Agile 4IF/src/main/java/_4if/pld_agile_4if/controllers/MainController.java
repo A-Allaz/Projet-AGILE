@@ -204,8 +204,8 @@ public class MainController {
             @RequestParam("pickupLocation") long pickupLocation,
             @RequestParam("deliveryLocation") long deliveryLocation,
             @RequestParam("pickupTime") int pickupTime,
-            @RequestParam("deliveryTime") int deliveryTime,
-            @RequestParam("courierId") int courierId) {
+            @RequestParam("deliveryTime") int deliveryTime) {
+
         Map<String, String> response = new HashMap<>();
         try {
             // Création d'une nouvelle instance de livraison
@@ -217,7 +217,6 @@ public class MainController {
 
             // Ajout de la livraison via le service
             deliveryManagementService.addDelivery(newDelivery);
-            deliveryManagementService.assignDeliveryToCourier(courierId, newDelivery.getId());
 
             response.put("status", "success");
             response.put("message", "Delivery added successfully!");
@@ -269,6 +268,29 @@ public class MainController {
         }
         return response;
     }
+
+    public void resetControllerData() {
+        this.cityMap = null;  // Réinitialiser la carte au niveau du contrôleur
+        deliveryManagementService.resetData();  // Réinitialiser les données de DeliveryManagementService
+    }
+
+
+    @PostMapping("/resetControllerData")
+    @ResponseBody
+    public Map<String, String> resetControllerDataRq() {
+        Map<String, String> response = new HashMap<>();
+        try {
+            resetControllerData();  // Appel de la méthode de réinitialisation
+            response.put("status", "success");
+            response.put("message", "Controller data reset successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Error resetting controller data: " + e.getMessage());
+        }
+        return response;
+    }
+
 
 
 }

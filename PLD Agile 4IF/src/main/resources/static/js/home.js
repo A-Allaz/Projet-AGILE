@@ -100,7 +100,7 @@ async function fetchCourierTour(courierId) {
 
         console.log("Optimal Tour Data:", data.optimalTour);
         displayOptimalTour(data.optimalTour);
-        displayTimeEstimates(data.timeEstimates);
+        displayTimeEstimates(data.timeEstimates, courierId);
     } catch (error) {
         console.error('Error fetching optimal tour for courier:', error);
         alert("Error fetching optimal tour: " + error.message);
@@ -191,10 +191,8 @@ function addNewDelivery() {
     const deliveryLocationInput = document.getElementById('deliveryLocationInput');
     const pickupTimeInput = document.querySelector("input[placeholder='Pickup time:']");
     const deliveryTimeInput = document.querySelector("input[placeholder='Delivery time:']");
-    const courierSelect = document.getElementById('courierSelect'); // Sélection du livreur
 
-
-    if (!pickupLocationInput || !deliveryLocationInput || !pickupTimeInput || !deliveryTimeInput || !courierSelect) {
+    if (!pickupLocationInput || !deliveryLocationInput || !pickupTimeInput || !deliveryTimeInput) {
         alert("Please fill in all fields.");
         return;
     }
@@ -203,7 +201,6 @@ function addNewDelivery() {
     const deliveryLocation = deliveryLocationInput.value;
     const pickupTime = pickupTimeInput.value;
     const deliveryTime = deliveryTimeInput.value;
-    const courierId = courierSelect.value;
 
     // Validate the input values
     if (!pickupLocation || !deliveryLocation || !pickupTime || !deliveryTime) {
@@ -225,7 +222,7 @@ function addNewDelivery() {
     }
 
     // Call the function to send the new delivery to the back-end
-    addDeliveryToServer(nearestPickupNode.id, nearestDeliveryNode.id, pickupTime, deliveryTime, courierId);
+    addDeliveryToServer(nearestPickupNode.id, nearestDeliveryNode.id, pickupTime, deliveryTime);
 }
 
 // Fonction pour supprimer une livraison
@@ -328,7 +325,7 @@ function submitEditForm(deliveryId) {
     const courierId = courierSelect.value;
 
     // Validate the input values
-    if (!pickupLocation || !deliveryLocation || !pickupTime || !deliveryTime || courierId) {
+    if (!pickupLocation || !deliveryLocation || !pickupTime || !deliveryTime || !courierId) {
         alert("Please fill in all fields.");
         return;
     }
@@ -469,6 +466,11 @@ async function assignDeliveryToCourier(deliveryId, courierId) {
         if (data.status === "success") {
             alert(data.message);
             loadDeliveries();  // Refresh deliveries list
+            const selectedCourierId = document.getElementById('courierSelect').value;
+            if ( selectedCourierId == courierId )
+            {
+                loadCourierInfo(selectedCourierId);
+            }
         } else {
             alert(`Error: ${data.message}`);
         }

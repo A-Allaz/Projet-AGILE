@@ -220,4 +220,13 @@ public class DeliveryManagementService {
     public void setCityMap(CityMap cityMap) {
         this.cityMap = cityMap;
     }
+
+    public void resetData() {
+        deliveries.clear();  // Vider la liste des livraisons
+        couriers.clear();  // Vider la liste des livreurs
+        courierRoutesAndTimeEstimates.clear();  // Vider les estimations et trajets par livreur
+        cityMap = null;  // Réinitialiser la carte
+        warehouseId = 0;  // Réinitialiser l'ID de l'entrepôt
+    }
+
 }

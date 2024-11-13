@@ -354,6 +354,27 @@ body{
     font-size: 1em;
 }
 
-.confirmButton:hover {
+.confirconfirmButtonNbCouriers:hover {
     background-color: #45a049;
+}
+
+.resetButtonContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px; /* espace au-dessus du bouton */
+}
+
+.resetButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #d9534f; /* couleur de fond */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.resetButton:hover {
+    background-color: #c9302c; /* couleur au survol */
 }
