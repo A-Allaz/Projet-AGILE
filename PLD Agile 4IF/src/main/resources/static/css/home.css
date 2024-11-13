@@ -2,6 +2,59 @@ body{
     background-color: rgb(255, 255, 255);
 }
 
+#map {
+    height: 100%;
+    width: 100%;
+}
+.deliveriesListBox {
+    border: 1px solid #ccc;
+    padding: 10px;
+    overflow : auto;
+    border-radius: 5px;
+}
+.delivery-item {
+    border: 1px solid #ddd;
+    margin: 5px;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.delivery-item:hover {
+    background-color: #f1f1f1;
+}
+
+.stopListBox {
+    border: 1px solid #ccc;
+    padding: 10px;
+    overflow : auto;
+    border-radius: 5px;
+}
+
+.stopListBox {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+    max-width: 400px;
+    font-family: Arial, sans-serif;
+}
+
+.estimate-item {
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+.estimate-item:last-child {
+    border-bottom: none;
+}
+
+.time, .distance {
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 10px;
+}
+
 .leftBlock{
     position: fixed;
     display: flex;
@@ -60,8 +113,8 @@ body{
         .locationButton{
             color: black;
             width: 40%;
-            height: 25%;
-            margin-top: 5%;
+            height: 20%;
+            margin-top: 4%;
 
             border-radius: 5px;
             border-style: none;
@@ -72,7 +125,7 @@ body{
             color: black;
             width: 38%;
             float: left;
-            margin-top: 5%;
+            margin-top: 4%;
             height: 10%;
 
             border-radius: 5px;
@@ -82,7 +135,7 @@ body{
         .addButton{
             color: black;
             width: 90%;
-            height: 25%;
+            height: 20%;
             margin-top: 5%;
             margin-left: 5%;
 
@@ -137,6 +190,19 @@ body{
     color: rgb(0, 0, 0);
     border-radius: 5px;
     font-family: Arial, Helvetica, sans-serif;
+
+    .couriersDropdown {
+        border: 1px solid #ccc;
+        padding: 10px;
+        overflow : auto;
+        border-radius: 5px;
+    }
+    .courier-item {
+        border: 1px solid #ddd;
+        margin: 5px;
+        padding: 8px;
+        border-radius: 4px;
+    }
 
     .stopListBox{
         position: relative;
@@ -252,4 +318,63 @@ body{
         display: inline-block;
         margin-top: -10px;
     }
+}
+
+/* Styles pour la superposition de la modale */
+.modal {
+    display: none; /* Masqué par défaut, affiché en JavaScript */
+    position: fixed;
+    z-index: 1000; /* Position très élevée pour apparaître devant tout */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Couleur de fond semi-transparente */
+    overflow: hidden;
+}
+
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    width: 40%;
+    max-width: 500px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.confirconfirmButtonNbCouriers {
+    background-color: #4CAF50; /* Couleur de confirmation */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.confirconfirmButtonNbCouriers:hover {
+    background-color: #45a049;
+}
+
+.resetButtonContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px; /* espace au-dessus du bouton */
+}
+
+.resetButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #d9534f; /* couleur de fond */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.resetButton:hover {
+    background-color: #c9302c; /* couleur au survol */
 }

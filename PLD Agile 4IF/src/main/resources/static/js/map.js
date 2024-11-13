@@ -12,7 +12,7 @@ function sleep(ms) {
 
 async function loadData() {
     try {
-        await sleep(3000); // Simulate a delay
+        await sleep(1000); // Simulate a delay
 
         const response = await fetch('/mapData');
         if (!response.ok) {
@@ -29,56 +29,16 @@ async function loadData() {
         console.log('Nodes:', nodes);
         console.log('Road Segments:', roadSegments);
 
-        // Plot the data on the map
-        // plotNodes(nodes);
-        plotRoadSegments(roadSegments);
-
     } catch (error) {
         console.error('Error loading data:', error);
         alert("Error loading data: " + error.message); // Display user-friendly error
     }
 }
 
-
-function checkAndPlotSegments() {
-    if (nodes && roadSegments) {
-        plotRoadSegments(roadSegments);
-    }
-}
-
-// Plot the nodes on the map
-function plotNodes(nodes) {
-    nodes.forEach(node => {
-        L.circleMarker([node.latitude, node.longitude], {
-            radius: 2,
-            color: 'black',
-            fillColor: 'black',
-            fillOpacity: 1
-        }).addTo(map);
-    });
-}
-
-// Plot the road segments on the map
-function plotRoadSegments(roadSegments) {
-    roadSegments.forEach(function(segment) {
-        const originNode = nodes.find(node => node.id === segment.origin);
-        const destinationNode = nodes.find(node => node.id === segment.destination);
-
-        if (originNode && destinationNode) {
-            L.polyline([
-                [originNode.latitude, originNode.longitude],
-                [destinationNode.latitude, destinationNode.longitude]
-            ], {
-                color: "rgb(70, 70, 70)",
-                weight: 3
-            }).addTo(map);
-        }
-    });
-}
-
 function fitMap(nodes) {
     var southwest = {lat: 90.0, lon: 180.0};
     var northeast = {lat: -90.0, lon: -180.0};
+
 
     for(var nodeId in nodes){
         var node = nodes[nodeId];
@@ -88,12 +48,32 @@ function fitMap(nodes) {
         node.longitude < southwest.lon ? southwest.lon = node.longitude : null;
     }
 
-    var center = [(northeast.lat + southwest.lat) / 2, (northeast.lon + southwest.lon) / 2]
-    var zoom = map.getBoundsZoom(L.latLngBounds(southwest, northeast))
+    const swLatLng = L.latLng(southwest.lat, southwest.lon);
+    const neLatLng = L.latLng(northeast.lat, northeast.lon);
+
+    const bounds = L.latLngBounds(swLatLng, neLatLng);
+
+    L.rectangle(bounds, {
+        color: "rgb(50, 50, 50)",
+        weight: 2,
+        fill: false,
+        dashArray: "5, 5"
+    }).addTo(map);
+
+
+    // Fit the map view to the bounds of the rectangle
+    map.fitBounds(bounds);
+
+
+    // Return center and zoom for additional use if needed
+    const center = [(northeast.lat + southwest.lat) / 2, (northeast.lon + southwest.lon) / 2];
+    const zoom = map.getBoundsZoom(bounds);
+
 
     console.log(southwest, northeast)
     return {center: center, zoom: zoom};
 }
+
 
 // Function to find the nearest node to a given latitude and longitude
 function findNearestNode(lat, lng) {
@@ -110,6 +90,28 @@ function findNearestNode(lat, lng) {
 
     return nearestNode;
 }
+
+function loadCourierInfo(courierId) {
+    fetch(`/optimalTour?courierId=${courierId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                displayOptimalTour(data.optimalTour); // Affiche la route
+                displayTimeEstimates(data.timeEstimates, courierId)
+            } else {
+                console.error(data.message);
+                alert("Error loading courier info: " + data.message);
+            }
+        })
+        .catch(error => console.error('Error fetching courier info:', error));
+}
+
+// Rafraîchit le trajet pour le livreur actuellement sélectionné
+document.getElementById('courierSelect').addEventListener('change', (e) => {
+    const selectedCourierId = e.target.value;
+    loadCourierInfo(selectedCourierId);
+});
+
 
 function displayOptimalTour(tourSegments) {
     // Nettoyer les anciens segments de tournée
@@ -135,7 +137,7 @@ function displayOptimalTour(tourSegments) {
     });
 }
 
-function displayTimeEstimates(timeEstimates) {
+function displayTimeEstimates(timeEstimates, courierId) {
     console.log(timeEstimates);
     const timeEstimatesDiv = document.querySelector(".stopListBox");
     timeEstimatesDiv.innerHTML = ""; // Effacer tout contenu existant
@@ -157,8 +159,17 @@ function displayTimeEstimates(timeEstimates) {
             name: estimate.segment.name
         });
 
+        let deliveriesCourier = [];
+        for (let delivery of deliveries)
+        {
+            if (delivery.courier !== null && delivery.courier.id == courierId)
+            {
+                deliveriesCourier.push(delivery);
+            }
+        }
+
         // Vérifier si le segment est un point de destination (on retrouve segment.destination dans deliveries)
-        if (deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination)) {
+        if (deliveriesCourier.some(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination)) {
 
         // Enregistrer l'heure d'arrivée pour ce groupe
             groupEndTime = estimate.arrivalTime;
@@ -169,7 +180,7 @@ function displayTimeEstimates(timeEstimates) {
 
             // Ajouter en-tête de groupe avec heure de départ
             groupItem.innerHTML = `
-                <p><strong>Aller au ${deliveries.some(delivery => delivery.pickupLocation === estimate.segment.destination) ? "Pickup" : "Delivery"} ${deliveries.find(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination).id} : départ ${groupStartTime}</strong></p>
+                <p><strong>Aller au ${deliveriesCourier.some(delivery => delivery.pickupLocation === estimate.segment.destination) ? "Pickup" : "Delivery"} ${deliveriesCourier.find(delivery => delivery.pickupLocation === estimate.segment.destination || delivery.deliveryLocation === estimate.segment.destination).id} : départ ${groupStartTime}</strong></p>
                 <p><strong>Détails :</strong></p>
             `;
 
@@ -181,8 +192,8 @@ function displayTimeEstimates(timeEstimates) {
                 } else {
                     const detailItem = document.createElement("p");
                     detailItem.innerHTML = `
-            ${segment.name} ------------------- ${segment.length.toFixed(1)} m<br>
-        `;
+                    ${segment.name} ${'-'}\t${segment.length.toFixed(1)} m<br>
+                `;
                     groupItem.appendChild(detailItem);
                 }
             });
@@ -219,7 +230,7 @@ function displayTimeEstimates(timeEstimates) {
             } else {
                 const detailItem = document.createElement("p");
                 detailItem.innerHTML = `
-                    ${segment.name} ------------------- ${segment.length.toFixed(1)} m<br>
+                    ${segment.name} ${'-'}\t${segment.length.toFixed(1)} m<br>
                 `;
                 returnItem.appendChild(detailItem);
             }
@@ -273,6 +284,7 @@ function displayMap(fileInputId, mapContainerId, toHideElementsIds) {
             const { center, zoom } = fitMap(nodes);
             map.setView(center, zoom);
             initializeMapClickListener(); // Call after map is initialized
+            showCourierModal();
         })
         .catch(error => {
             console.error('Error loading map data:', error);
@@ -296,7 +308,6 @@ function sendFileToServer(file, uploadUrl) {
         })
         .then(data => {
             console.log('File upload successful:', data);
-            alert(data);  // Display the response in an alert
         })
         .catch(error => {
             console.error('Error uploading file:', error);
@@ -317,9 +328,6 @@ function loadMapPoints() {
             map.removeLayer(layer);
         }
     });
-
-
-    alert("Loading map points...");
 
     fetch('/mapPoints')
         .then(response => response.json())
@@ -373,7 +381,7 @@ function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliv
         pickupLocation: pickupLocation,
         deliveryLocation: deliveryLocation,
         pickupTime: pickupTime,
-        deliveryTime: deliveryTime
+        deliveryTime: deliveryTime,
     });
 
     console.log('Request Body:', requestBody.toString());
@@ -394,15 +402,6 @@ function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliv
         .then(data => {
             if (data.status === "success") {
                 console.log(data.message);
-                // Add the new delivery in deliveries variable with an id
-                const newDelivery = {
-                    id: deliveries.length + 1,
-                    pickupLocation: pickupLocation,
-                    deliveryLocation: deliveryLocation,
-                    pickupTime: pickupTime,
-                    deliveryTime: deliveryTime
-                };
-                deliveries.push(newDelivery);
 
                 // Clear the input fields
                 document.getElementById('pickupLocationInput').value = "";
@@ -416,8 +415,6 @@ function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliv
                 // Refresh the map to display the new point
                 loadMapPoints();
 
-                // Refresh the details of the delivery tour
-                fetchOptimalTour();
             } else {
                 console.error(data.message);
             }
@@ -441,9 +438,6 @@ function initializeMapClickListener() {
             elementIdPickup = 'pickupLocationInput';
             elementIdDelivery = 'deliveryLocationInput';
         }
-
-        console.log(elementIdDelivery);
-        console.log(elementIdPickup);
 
         if (isSelectingPickup) {
             const pickupInput = document.getElementById(elementIdPickup);
@@ -477,4 +471,115 @@ function enableDeliverySelection() {
     isSelectingPickup = false;
     isSelectingDelivery = true;
     alert("Click on the map to select the Delivery location.");
+}
+
+// Fonction pour afficher la modale de saisie du nombre de livreurs
+function showCourierModal() {
+    const modal = document.getElementById("courierModal");
+    modal.style.display = "block";
+}
+
+// Fonction pour envoyer le nombre de livreurs au serveur
+function initializeCouriers(event) {
+    event.preventDefault();  // Empêche le rechargement de la page
+
+    const courierCountInput = document.getElementById('courierCount');
+    const courierCount = parseInt(courierCountInput.value, 10);
+
+    // Validation pour vérifier que la saisie est un nombre entier positif
+    if (!Number.isInteger(courierCount) || courierCount < 1) {
+        alert("Please enter a valid number of couriers (greater than 0).");
+        courierCountInput.focus();
+        return;  // Ne pas fermer la modale
+    }
+
+    if(courierCount > 20){
+        alert("Please enter a number of couriers less than 20.");
+        courierCountInput.focus();
+        return;
+    }
+
+    fetch('/initializeCouriers', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ count: courierCountInput.value })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                closeCourierModal();
+                loadCouriers();  // Optionnel : chargement des livreurs si besoin
+            } else {
+                alert("Error initializing couriers: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error initializing couriers:', error);
+            alert("Error: " + error.message);
+        });
+}
+
+// Fonction pour fermer la modale
+function closeCourierModal() {
+    const modal = document.getElementById("courierModal");
+    modal.style.display = "none";
+}
+
+function resetPage() {
+    // Réinitialisation des éléments de la page
+    document.getElementById('tourFileTitle').innerText = 'Select a file';
+    document.getElementById('mapFileTitle').innerText = 'Select a file';
+    document.getElementById('tourTimeValue').innerText = '--:--';
+    document.getElementById('courierSelect').value = '';
+
+    // Vider les listes
+    document.querySelector('.deliveriesListBox').innerHTML = '';
+    document.querySelector('.stopListBox').innerHTML = '';
+
+    // Réinitialisation des champs de saisie
+    document.getElementById('pickupLocationInput').value = '';
+    document.getElementById('deliveryLocationInput').value = '';
+    document.querySelectorAll('.timeInput').forEach(input => input.value = '');
+
+    // Réinitialiser les objets de la page
+    nodes = [];  // Réinitialiser les nodes
+    roadSegments = [];  // Réinitialiser les segments de route
+    deliveries = [];  // Réinitialiser les livraisons
+
+    // Vérifier si une carte existe déjà et la détruire
+    if (map) {
+        map.remove();
+    }
+
+    // Vider la div mapBlock
+    const mapBlock = document.getElementById('mapContainer');
+    const mapFileInputContainer = `
+        <!-- Import du fichier XML pour la carte -->
+        <input type="file" style="display: none;" id="mapFileInput" accept=".xml" onchange="updateFileName('mapFileInput', 'mapFileTitle', 'confirmMapButton')">
+        <button id="mapFileButton" onclick="document.getElementById('mapFileInput').click();" class="mapButton">Import .xml delivery map file</button>
+        <text id="mapFileTitle" style="margin-top: 2%;">Select a file</text>
+        <button id="confirmMapButton" class="confirmButton" onclick="displayMap('mapFileInput', 'mapContainer', ['mapFileButton', 'mapFileTitle', 'confirmMapButton'])">Confirm Map</button>
+    `;
+
+    // Réinjecter le contenu dans la div mapBlock
+    mapBlock.innerHTML = mapFileInputContainer;
+
+
+    // Appeler le backend pour réinitialiser les données
+    fetch('/resetControllerData', {
+        method: 'POST'
+    })
+        .then(response => {
+            if (response.ok) {
+                alert("Page reset successfully.");
+            } else {
+                alert("Failed to reset page data.");
+            }
+        })
+        .catch(error => {
+            console.error("Error resetting page data:", error);
+            alert("An error occurred while resetting the page.");
+        });
 }

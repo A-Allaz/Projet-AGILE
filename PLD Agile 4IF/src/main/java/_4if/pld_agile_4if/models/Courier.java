@@ -6,14 +6,12 @@ public class Courier {
 
     private int id;
     private boolean availability;
-    private ArrayList<Delivery> assignedDeliveries;
     private Route currentRoute;
 
     // Constructor
-    public Courier(int id, boolean availability, ArrayList<Delivery> assignedDeliveries, Route currentRoute) {
+    public Courier(int id, boolean availability, Route currentRoute) {
         this.id = id;
         this.availability = availability;
-        this.assignedDeliveries = assignedDeliveries;
         this.currentRoute = currentRoute;
     }
 
@@ -34,14 +32,6 @@ public class Courier {
         this.availability = availability;
     }
 
-    public ArrayList<Delivery> getAssignedDeliveries() {
-        return assignedDeliveries;
-    }
-
-    public void setAssignedDeliveries(ArrayList<Delivery> assignedDeliveries) {
-        this.assignedDeliveries = assignedDeliveries;
-    }
-
     public Route getCurrentRoute() {
         return currentRoute;
     }
@@ -50,16 +40,11 @@ public class Courier {
         this.currentRoute = currentRoute;
     }
 
-    public void addDelivery(Delivery delivery) {
-        this.assignedDeliveries.add(delivery);
-    }
-
     @Override
     public String toString() {
         return "Courier{" +
                 "id=" + id +
                 ", availability=" + availability +
-                ", assignedDeliveries=" + assignedDeliveries +
                 ", currentRoute=" + currentRoute +
                 '}';
     }
