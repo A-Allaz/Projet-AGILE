@@ -10,10 +10,3 @@
 ## Ressources:
 
 - [SpringBoot Starter](https://medium.com/@mutahirmanzoor1/getting-started-with-spring-boot-a-beginners-guide-9dcd38c2cd8c)
-
-
-
-
-
-
-https://docs.google.com/document/d/1u8XM5QMtlZloYrfqLe-BUDga7wOSFbnXu3AcaQNjRaQ/edit?tab=t.0
