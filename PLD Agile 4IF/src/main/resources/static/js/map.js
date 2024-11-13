@@ -493,6 +493,12 @@ function initializeCouriers(event) {
         return;  // Ne pas fermer la modale
     }
 
+    if(courierCount > 20){
+        alert("Please enter a number of couriers less than 20.");
+        courierCountInput.focus();
+        return;
+    }
+
     fetch('/initializeCouriers', {
         method: 'POST',
         headers: {
@@ -538,9 +544,9 @@ function resetPage() {
     document.querySelectorAll('.timeInput').forEach(input => input.value = '');
 
     // Réinitialiser les objets de la page
-    nodes = null;  // Réinitialiser les nodes
-    roadSegments = null;  // Réinitialiser les segments de route
-    deliveries = null;  // Réinitialiser les livraisons
+    nodes = [];  // Réinitialiser les nodes
+    roadSegments = [];  // Réinitialiser les segments de route
+    deliveries = [];  // Réinitialiser les livraisons
 
     // Vérifier si une carte existe déjà et la détruire
     if (map) {

@@ -227,6 +227,14 @@ public class DeliveryManagementService {
         courierRoutesAndTimeEstimates.clear();  // Vider les estimations et trajets par livreur
         cityMap = null;  // Réinitialiser la carte
         warehouseId = 0;  // Réinitialiser l'ID de l'entrepôt
+        Delivery.resetIdGenerator(); // Réinitialiser l'ID des livraisons
+
+        System.out.println("Data reset");
+        System.out.println("Deliveries: " + deliveries);
+        System.out.println("Couriers: " + couriers);
+        System.out.println("Courier routes and time estimates: " + courierRoutesAndTimeEstimates);
+        System.out.println("City map: " + cityMap);
+        System.out.println("Warehouse ID: " + warehouseId);
     }
 
 }

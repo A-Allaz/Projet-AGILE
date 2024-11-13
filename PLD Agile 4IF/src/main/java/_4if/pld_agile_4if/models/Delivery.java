@@ -98,6 +98,10 @@ public class Delivery {
         this.route = route;
     }
 
+    public static void resetIdGenerator() {
+        idGenerator.set(0);
+    }
+
     @Override
     public String toString() {
         return "Delivery{" +
