@@ -36,13 +36,22 @@ test('load a map', async ({ page }) => {
   });
 
   await test.step('assign courier', async() => {
-    await page.getByRole('button', { name: 'Assign' }).click()
+    await page.getByRole('button', { name: 'Assign' }).first().click()
     await page.waitForTimeout(500)
-    await page.locator('div').filter({ hasText: 'Import .xml delivery tour file demandePetit1.xml Confirm Tour Delivery #1' }).getByRole('combobox').click()
+    await page.locator('div').filter({ hasText: 'Import .xml delivery tour file' }).getByRole('combobox').first().selectOption('1')
+    await page.waitForTimeout(500)
+    await page.getByRole('button', { name: 'Confirm Assignment' }).click()
     await page.waitForTimeout(500)
   })
 
   await test.step('select courier', async() => {
-    
+    await page.locator('#courierSelect').click()
+    await page.locator('#courierSelect').selectOption('1')
+    await page.waitForTimeout(1000)
+    await page.screenshot()
+  })
+
+  test.step('reset', async() => {
+    page.getByRole('button', { name: 'Reset' }).click()
   })
 });
