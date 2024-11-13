@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Main-Class: _4if.pld_agile_4if.PldAgile4IfApplication
+
