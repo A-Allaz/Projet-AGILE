@@ -61,6 +61,7 @@ public class MainController {
 
             // Parser le fichier XML et stocker le CityMap
             cityMap = xmlParsingService.parseCityMap(tempFile);
+            deliveryManagementService.setCityMap(cityMap);
             return "City map uploaded successfully!";
         } catch (Exception e) {
             e.printStackTrace();
@@ -158,8 +159,7 @@ public class MainController {
             Courier courier = deliveryManagementService.getCourierById(courierId);
             if (courier != null) {
                 response.put("courier", courier);
-                response.put("assignedDeliveries", courier.getAssignedDeliveries());
-                response.put("currentRoute", courier.getCurrentRoute().getStopPoints());
+                response.put("currentRoute", courier.getCurrentRoute() != null ? courier.getCurrentRoute().getStopPoints() : null);
                 response.put("status", "success");
             } else {
                 response.put("status", "error");
@@ -183,7 +183,9 @@ public class MainController {
     @GetMapping("/couriers")
     @ResponseBody
     public List<Courier> getAllCouriers() {
-        return deliveryManagementService.getAllCouriers();
+        List<Courier> couriers = deliveryManagementService.getAllCouriers();
+        System.out.println("Couriers JSON output: " + couriers);
+        return couriers;
     }
 
     @GetMapping("/mapPoints")

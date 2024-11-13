@@ -122,6 +122,7 @@ async function loadDeliveries() {
         }
 
         deliveries = await response.json();
+        console.log("Deliveries:", deliveries);
         const deliveriesListBox = document.querySelector(".deliveriesListBox");
         deliveriesListBox.innerHTML = "";  // Clear any existing content
 
@@ -135,7 +136,7 @@ async function loadDeliveries() {
                 <p><strong>Delivery:</strong> ${delivery.deliveryLocation}</p>
                 <p><strong>Pickup Time:</strong> ${delivery.pickupTime}</p>
                 <p><strong>Delivery Time:</strong> ${delivery.deliveryTime}</p>
-                <p><strong>Delivery Courier:</strong> Courier ${delivery.courierId}</p>
+                <p><strong>Delivery Courier:</strong> ${delivery.courier ? `Courier ${delivery.courier.id}` : 'Non defined'}</p>
                 <button onclick="deleteDelivery(${delivery.id})">Delete</button>
                 <button onclick="showEditForm(${delivery.id})">Modify</button>
                 <button onclick="showAssignCourierForm(${delivery.id})">Assign</button>
@@ -286,7 +287,9 @@ function showEditForm(deliveryId) {
 async function loadCouriersIntoSelect(selectId, selectedCourierId = null) {
     try {
         const response = await fetch('/couriers');
+        console.log("Couriers response:", response);
         const couriers = await response.json();
+        console.log("Couriers:", couriers);
         const select = document.getElementById(selectId);
 
         select.innerHTML = "";  // Clear existing options
@@ -415,6 +418,7 @@ async function showAssignCourierForm(deliveryId) {
     // Ajouter le menu déroulant de sélection de livreurs
     const courierSelect = document.createElement("select");
     courierSelect.innerHTML = "<option value='' disabled selected>Select a Courier</option>";
+    console.log("Couriers:", couriers);
     couriers.forEach(courier => {
         const option = document.createElement("option");
         option.value = courier.id;

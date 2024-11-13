@@ -240,7 +240,7 @@ function displayTimeEstimates(timeEstimates) {
             } else {
                 const detailItem = document.createElement("p");
                 detailItem.innerHTML = `
-                    ${segment.name} ------------------- ${segment.length.toFixed(1)} m<br>
+                    ${segment.name} ${'-'.repeat(50 - segment.name.length)}\t${segment.length.toFixed(1)} m<br>
                 `;
                 returnItem.appendChild(detailItem);
             }
@@ -440,8 +440,6 @@ function addDeliveryToServer(pickupLocation, deliveryLocation, pickupTime, deliv
                 // Refresh the map to display the new point
                 loadMapPoints();
 
-                // Refresh the details of the delivery tour
-                fetchOptimalTour();
             } else {
                 console.error(data.message);
             }

@@ -140,6 +140,7 @@ public class TourCalculatorService {
         return tour;
     }
 
+
     // Chercher le prochain point à visiter en respectant les contraintes de pickup et de livraison
     private long findNextLocation(Map<Long, Map<Long, Double>> subGraph, long currentLocation, List<Delivery> deliveries, Set<Long> visitedPickups, Set<Long> visitedDeliveries) {
         long nextLocation = -1; // Initialisation de la prochaine destination
@@ -182,10 +183,10 @@ public class TourCalculatorService {
         {
             this.currentCapacity -= 1;
         }
-        else
+        /*else
         {
             System.out.println("currentCapacity = -1");
-        }
+        }*/
         // Retourner la prochaine destination trouvée (ou -1 si quelque chose se passe mal, mais cela ne devrait jamais arriver)
         return nextLocation;
     }

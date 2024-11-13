@@ -27,7 +27,7 @@ public class DeliveryManagementService {
     // Initialize couriers
     public void initializeCouriers(int numberOfCouriers) {
         for (int i = 1; i <= numberOfCouriers; i++) {
-            couriers.add(new Courier(i, true, new ArrayList<>(), null)); // Disponibles par défaut
+            couriers.add(new Courier(i, true, null)); // Disponibles par défaut
         }
     }
 
@@ -35,10 +35,14 @@ public class DeliveryManagementService {
     public boolean assignDeliveryToCourier(int courierId, int deliveryId) {
         Courier courier = getCourierById(courierId);
         Delivery delivery = findDeliveryById(deliveryId);
+        int formerCourierId = delivery.getCourier() != null ? delivery.getCourier().getId() : 0;
+        System.out.println("Assigning delivery " + deliveryId + " to courier " + courierId);
+        System.out.println("Delivery: " + delivery);
 
         if (courier != null && delivery != null) {
-            courier.addDelivery(delivery);
             delivery.setCourier(courier);
+
+            System.out.println("Delivery: " + delivery);
 
             // Mettre à jour la liste globale des livraisons
             updateDeliveryInList(delivery);
@@ -46,12 +50,16 @@ public class DeliveryManagementService {
             // Mettre à jour la liste globale des livreurs
             updateCourierInList(courier);
 
+            // Si la delivery avait déjà un livreur, recalculer le trajet du livreur qui a perdu la livraison
+            if(formerCourierId != 0) {
+                Courier formerCourier = getCourierById(formerCourierId);
+                calculateCourierRoute(formerCourier);
+            }
+
+            // Recalculer le trajet du livreur
             calculateCourierRoute(courier);
             return true;
         }
-        System.out.println("Courier " + courier.toString());
-        System.out.println(deliveries);
-        System.out.println("Delivery " + delivery.toString());
         return false;
     }
 
@@ -84,11 +92,23 @@ public class DeliveryManagementService {
         return deliveries.stream().filter(d -> d.getId() == deliveryId).findFirst().orElse(null);
     }
 
+    public List<Delivery> getDeliveriesCourier(Courier courier) {
+        List<Delivery> courierDeliveries = new ArrayList<>();
+        for(Delivery delivery : deliveries) {
+            if(delivery.getCourier() == courier) {
+                courierDeliveries.add(delivery);
+            }
+        }
+        return courierDeliveries;
+    }
+
     // Calculate the optimal route for a specific courier based on their deliveries
     public void calculateCourierRoute(Courier courier) {
-        if (cityMap != null && !courier.getAssignedDeliveries().isEmpty()) {
+        List<Delivery> courierDeliveries = getDeliveriesCourier(courier);
+        System.out.println("Calculating route for courier " + courier.getId() + " with " + courierDeliveries.size() + " deliveries");
+        if (cityMap != null && !courierDeliveries.isEmpty()) {
             Map<String, Object> result = tourCalculatorService.calculateOptimalTourWithEstimates(
-                    cityMap, courier.getAssignedDeliveries(), warehouseId);
+                    cityMap, courierDeliveries, cityMap.getWarehouse().getAddress());
             List<RoadSegment> optimalTour = (List<RoadSegment>) result.get("optimalTour");
             List<Map<String, Object>> timeEstimates = (List<Map<String, Object>>) result.get("timeEstimates");
             courier.setCurrentRoute(new Route(optimalTour)); // Met à jour le trajet actuel du livreur
@@ -113,20 +133,15 @@ public class DeliveryManagementService {
         }
     }
 
-    // Collect and stock the deliveries assigned to a courier
-    public void loadDeliveries(Courier selectedCourier){
-        deliveries = selectedCourier.getAssignedDeliveries();
-    }
-
     // Add a new delivery
     public void addDelivery(Delivery delivery) {
         deliveries.add(delivery);
     }
 
     // Remove a delivery by its ID and reassigns affected couriers
-    public boolean removeDelivery(long deliveryId) {
+    public boolean removeDelivery(long deliveryId) {;
         for (Courier courier : couriers) {
-            boolean removed = courier.getAssignedDeliveries().removeIf(d -> d.getId() == deliveryId);
+            boolean removed = getDeliveriesCourier(courier).removeIf(d -> d.getId() == deliveryId);
             if (removed) {
                 deliveries.removeIf(d -> d.getId() == deliveryId);
                 calculateCourierRoute(courier); // Recalculer le trajet du livreur
@@ -138,30 +153,30 @@ public class DeliveryManagementService {
         return removed;
     }
 
-    // Modify an existing delivery by its ID
+
     // Modify an existing delivery and recalculate routes for assigned courier
     public void modifyDelivery(long deliveryId, Delivery updatedDelivery) {
+        Delivery deliveryToUpdate = null;
+        Courier assignedCourier = null;
+
         for (Courier courier : couriers) {
-            for (Delivery delivery : courier.getAssignedDeliveries()) {
+            for (Delivery delivery : getDeliveriesCourier(courier)) {
                 if (delivery.getId() == deliveryId) {
-                    delivery.setPickupLocation(updatedDelivery.getPickupLocation());
-                    delivery.setDeliveryLocation(updatedDelivery.getDeliveryLocation());
-                    delivery.setPickupTime(updatedDelivery.getPickupTime());
-                    delivery.setDeliveryTime(updatedDelivery.getDeliveryTime());
-                    calculateCourierRoute(courier); // Recalculer le trajet du livreur
+                    deliveryToUpdate = delivery;
+                    assignedCourier = courier;
                     break;
                 }
             }
-        }
-
-        for (Delivery delivery : deliveries) {
-            if (delivery.getId() == deliveryId) {
-                delivery.setPickupLocation(updatedDelivery.getPickupLocation());
-                delivery.setDeliveryLocation(updatedDelivery.getDeliveryLocation());
-                delivery.setPickupTime(updatedDelivery.getPickupTime());
-                delivery.setDeliveryTime(updatedDelivery.getDeliveryTime());
+            if (deliveryToUpdate != null) {
                 break;
             }
+        }
+        if (deliveryToUpdate != null) {
+            deliveryToUpdate.setPickupLocation(updatedDelivery.getPickupLocation());
+            deliveryToUpdate.setDeliveryLocation(updatedDelivery.getDeliveryLocation());
+            deliveryToUpdate.setPickupTime(updatedDelivery.getPickupTime());
+            deliveryToUpdate.setDeliveryTime(updatedDelivery.getDeliveryTime());
+            calculateCourierRoute(assignedCourier); // Recalculer le trajet du livreur
         }
     }
 
@@ -186,12 +201,6 @@ public class DeliveryManagementService {
     // Get the current list of deliveries
     public List<Delivery> getAllDeliveries() {
         return deliveries;
-    }
-
-
-    // Get the delivery of a specific courier
-    public List<Delivery> getCourierDeliveries(int courierId) {
-        return getCourierById(courierId).getAssignedDeliveries();
     }
 
     public List<Map<String, Object>> getCourierRouteTimeEstimates(int courierId) {
