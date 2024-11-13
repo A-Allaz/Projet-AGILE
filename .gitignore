@@ -1,3 +1,8 @@
 *:Zone.Identifier
 *.kra
 *.kra~
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
