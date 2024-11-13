@@ -33,6 +33,8 @@ export default defineConfig({
 
     screenshot: 'on',
 
+    video: 'on',
+
     actionTimeout: 1000,
   },
 

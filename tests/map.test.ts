@@ -13,7 +13,7 @@ test('load a map', async ({ page }) => {
   await fileChooser.setFiles(path.join(__dirname, 'petitPlan.xml'));
 
   await page.getByRole('button', { name: 'Confirm Map' }).click()
-  await page.waitForTimeout(5000)
+  await page.waitForTimeout(2000)
 
   await test.step('load a tour', async() => {
     test.setTimeout(15000)
@@ -25,7 +25,11 @@ test('load a map', async ({ page }) => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'petitPlan.xml'));
 
+    await page.waitForTimeout(1000)
     await page.getByRole('button', { name: 'Confirm Tour' }).click()
-    await page.waitForTimeout(5000)
+    await page.waitForTimeout(1000)
+
+    await page.getByRole('button', { name: 'Show Optimal Tour' }).click()
+    await page.waitForTimeout(2000)
   });
 });
