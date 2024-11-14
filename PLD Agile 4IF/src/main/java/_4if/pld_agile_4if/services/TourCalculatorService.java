@@ -9,12 +9,24 @@ import org.springframework.stereotype.Service;
 import java.time.LocalTime;
 import java.util.*;
 
+/**
+ * @desc Service class to calculate the optimal tour with time estimates
+ */
+
 @Service
 public class TourCalculatorService {
+
     private int currentCapacity;
     private static final double COURIER_SPEED_KMH = 15.0;  // Vitesse en km/h
 
     // Méthode principale pour calculer le meilleur tour
+    /**
+     * Calculate the optimal tour with time estimates
+     * @param cityMap City map
+     * @param deliveries List of deliveries
+     * @param warehouseId Warehouse ID
+     * @return Map containing the optimal tour and time estimates
+     */
     public  Map<String, Object> calculateOptimalTourWithEstimates(CityMap cityMap, List<Delivery> deliveries, long warehouseId) {
         // Étape 1: Identifier tous les points d'intérêt (entrepôt, points de pickup et livraison)
         Set<Long> pointsOfInterest = new HashSet<>();
@@ -54,6 +66,12 @@ public class TourCalculatorService {
     }
 
     // Méthode pour calculer les plus courts chemins à partir de chaque point d'intérêt
+    /**
+     * Compute the shortest paths from each point of interest
+     * @param cityMap City map
+     * @param pointsOfInterest Set of points of interest
+     * @return Map containing the shortest paths from each point of interest
+     */
     private Map<Long, Map<Long,Double>> computeShortestPaths(CityMap cityMap, Set<Long> pointsOfInterest) {
         Map<Long, Map<Long,Double>> shortestPaths = new HashMap<>();
 
@@ -65,6 +83,12 @@ public class TourCalculatorService {
     }
 
     // Algorithme de Dijkstra pour calculer les plus courts chemins à partir d'une intersection source
+    /**
+     * Dijkstra's algorithm to compute the shortest paths from a source intersection
+     * @param cityMap City map
+     * @param source Source intersection
+     * @return Map containing the shortest paths from the source intersection
+     */
     public Map<Long, Double> dijkstra(CityMap cityMap, long source) {
         Map<Long, Double> distances = new HashMap<>();
 
@@ -95,6 +119,12 @@ public class TourCalculatorService {
     }
 
     // Méthode pour construire un sous-graphe complet entre les points d'intérêt
+    /**
+     * Build a complete subgraph between the points of interest
+     * @param shortestPaths Map containing the shortest paths between each pair of points of interest
+     * @param pointsOfInterest Set of points of interest
+     * @return Map containing the complete subgraph between the points of interest
+     */
     private Map<Long, Map<Long, Double>> buildCompleteSubGraph(Map<Long, Map<Long,Double>> shortestPaths, Set<Long> pointsOfInterest) {
         Map<Long, Map<Long, Double>> subGraph = new HashMap<>();
 
@@ -116,6 +146,13 @@ public class TourCalculatorService {
     }
 
     // Méthode pour trouver le meilleur tour tout en respectant les contraintes de pickup avant livraison
+    /**
+     * Find the best tour while respecting the constraints of pickup before delivery
+     * @param completeSubGraph Map containing the complete subgraph between the points of interest
+     * @param deliveries List of deliveries
+     * @param wareHouseId Warehouse ID
+     * @return List containing the best tour
+     */
     private List<Long> findBestTour(Map<Long, Map<Long, Double>> completeSubGraph, List<Delivery> deliveries, long wareHouseId) {
         List<Long> tour = new ArrayList<>();
         Set<Long> visitedPickups = new HashSet<>();
@@ -142,6 +179,15 @@ public class TourCalculatorService {
 
 
     // Chercher le prochain point à visiter en respectant les contraintes de pickup et de livraison
+    /**
+     * Find the next location to visit while respecting the constraints of pickup and delivery
+     * @param subGraph Map containing the complete subgraph between the points of interest
+     * @param currentLocation Current location
+     * @param deliveries List of deliveries
+     * @param visitedPickups Set of visited pickups
+     * @param visitedDeliveries Set of visited deliveries
+     * @return Next location to visit
+     */
     private long findNextLocation(Map<Long, Map<Long, Double>> subGraph, long currentLocation, List<Delivery> deliveries, Set<Long> visitedPickups, Set<Long> visitedDeliveries) {
         long nextLocation = -1; // Initialisation de la prochaine destination
         Double shortestDistance = Double.MAX_VALUE; // La distance la plus courte sera mise à jour au fur et à mesure
@@ -191,6 +237,13 @@ public class TourCalculatorService {
         return nextLocation;
     }
 
+    /**
+     * Mark the visited pickup and delivery locations
+     * @param location Location to mark as visited
+     * @param deliveries List of deliveries
+     * @param visitedPickups Set of visited pickups
+     * @param visitedDeliveries Set of visited deliveries
+     */
     private void markVisited(long location, List<Delivery> deliveries, Set<Long> visitedPickups, Set<Long> visitedDeliveries) {
         for(Delivery delivery : deliveries) {
             if(delivery.getPickupLocation() == location) {
@@ -202,6 +255,12 @@ public class TourCalculatorService {
         }
     }
 
+    /**
+     * Get the complete path between each pair of points in the tour
+     * @param cityMap City map
+     * @param tour List of points in the tour
+     * @return List containing the complete path of road segments
+     */
     public List<RoadSegment> getCompletePath(CityMap cityMap, List<Long> tour) {
         List<RoadSegment> completePath = new ArrayList<>();
 
@@ -220,6 +279,13 @@ public class TourCalculatorService {
         return completePath; // Retourner la liste complète des segments de route
     }
 
+    /**
+     * Get the complete path between two points using Dijkstra's algorithm
+     * @param cityMap City map
+     * @param source Source intersection
+     * @param destination Destination intersection
+     * @return List containing the complete path of road segments
+     */
     private List<RoadSegment> dijkstraPath(CityMap cityMap, long source, long destination) {
         // Map pour garder la distance minimum depuis la source
         Map<Long, Double> distances = new HashMap<>();
@@ -280,6 +346,13 @@ public class TourCalculatorService {
     }
 
     // Méthode pour calculer les estimations de temps pour chaque arrêt
+    /**
+     * Calculate the time estimates for each stop
+     * @param completeDeliveryPath List of road segments in the complete delivery path
+     * @param deliveries List of deliveries
+     * @param startTime Start time
+     * @return List containing the time estimates for each stop
+     */
     private List<Map<String, Object>> calculateTimeEstimates(List<RoadSegment> completeDeliveryPath, List<Delivery> deliveries, LocalTime startTime) {
         List<Map<String, Object>> timeEstimates = new ArrayList<>();
         LocalTime currentTime = startTime;
@@ -312,6 +385,11 @@ public class TourCalculatorService {
     }
 
     // Méthode pour vérifier que le temps total ne dépasse pas 7 heures
+    /**
+     * Check that the total time does not exceed 7 hours
+     * @param timeEstimates List of time estimates for each stop
+     * @param deliveries List of deliveries
+     */
     public void checkTotalTime(List<Map<String, Object>> timeEstimates, List<Delivery> deliveries)
     {
         double totalTimeMinutes = 0;
@@ -347,20 +425,36 @@ public class TourCalculatorService {
 
     // Classe pour gérer la priorité dans la file d'attente
     private static class IntersectionDistance {
+        /**
+         * IntersectionDistance class
+         */
         private long intersectionId; // Utilisation d'un ID d'intersection au lieu d'un objet Intersection
         private double distance;
 
+        /**
+         * Constructor
+         * @param intersectionId Intersection ID
+         * @param distance Distance
+         */
         public IntersectionDistance(long intersectionId, double distance) {
             this.intersectionId = intersectionId;
             this.distance = distance;
         }
 
         // Getter pour l'ID de l'intersection
+        /**
+         * Get the intersection ID
+         * @return Intersection ID
+         */
         public long getIntersectionId() {
             return intersectionId;
         }
 
         // Getter pour la distance
+        /**
+         * Get the distance
+         * @return Distance
+         */
         public double getDistance() {
             return distance;
         }

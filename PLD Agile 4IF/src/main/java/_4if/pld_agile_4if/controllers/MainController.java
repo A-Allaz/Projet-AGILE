@@ -16,6 +16,9 @@ import java.util.Map;
 
 @Controller
 public class MainController {
+    /**
+     * Main controller for the application
+     */
 
     @Autowired
     private XMLParsingService xmlParsingService;
@@ -33,7 +36,11 @@ public class MainController {
         return "home";
     }
 
-    // Initialiser les livreurs avec un nombre fixe au lancement
+    /**
+     * Initialize couriers with a fixed number at startup
+     * @param count The number of couriers to initialize
+     * @return A map containing the status and message of the operation
+     */
     @PostMapping("/initializeCouriers")
     @ResponseBody
     public Map<String, String> initializeCouriers(@RequestParam("count") int count) {
@@ -51,7 +58,11 @@ public class MainController {
     }
 
 
-    // Endpoint pour charger le fichier XML de la carte
+    /**
+     * Upload the XML file containing the city map
+     * @param file The uploaded file
+     * @return A message indicating the status of the operation
+     */
     @PostMapping("/uploadMap")
     @ResponseBody
     public String uploadMapFile(@RequestParam("file") MultipartFile file) {
@@ -69,7 +80,10 @@ public class MainController {
         }
     }
 
-    // Endpoint pour récupérer les données du CityMap sous forme de JSON
+    /**
+     * Get the map data as JSON
+     * @return A map containing the node and road segment data
+     */
     @GetMapping("/mapData")
     @ResponseBody
     public Map<String, Object> getMapData() {
@@ -83,7 +97,11 @@ public class MainController {
         return data;
     }
 
-    // Endpoint pour charger le fichier XML des livraisons
+    /**
+     * Upload the XML file containing the delivery tour
+     * @param file The uploaded file
+     * @return A message indicating the status of the operation
+     */
     @PostMapping("/uploadTour")
     @ResponseBody
     public String uploadTourFile(@RequestParam("file") MultipartFile file) {
@@ -105,7 +123,11 @@ public class MainController {
         }
     }
 
-    // Endpoint pour récupérer les données des tournées optimisées
+    /**
+     * Get the optimal tour for a specific courier
+     * @param courierId The ID of the courier
+     * @return A map containing the optimal tour and time estimates
+     */
     @GetMapping("/optimalTour")
     @ResponseBody
     public Map<String, Object> getOptimalTour(
@@ -126,7 +148,12 @@ public class MainController {
         return response;
     }
 
-    // Endpoint pour assigner une livraison à un livreur
+    /**
+     * Assign a delivery to a courier
+     * @param courierId The ID of the courier
+     * @param deliveryId The ID of the delivery
+     * @return A map containing the status and message of the operation
+     */
     @PostMapping("/assignDeliveryToCourier")
     @ResponseBody
     public Map<String, String> assignDeliveryToCourier(
@@ -150,7 +177,11 @@ public class MainController {
         return response;
     }
 
-    // Endpoint pour récupérer les informations d'un livreur (livraisons et route)
+    /**
+     * Get the information of a courier
+     * @param courierId The ID of the courier
+     * @return A map containing the courier information, current route and status
+     */
     @GetMapping("/courierInfo")
     @ResponseBody
     public Map<String, Object> getCourierInfo(@RequestParam("courierId") int courierId) {
@@ -174,12 +205,22 @@ public class MainController {
     }
 
 
+    /**
+     * Get the information of a delivery
+     * @param
+     * @return A map containing the delivery information, assigned courier and route
+     */
     @GetMapping("/deliveries")
     @ResponseBody
     public List<Delivery> getDeliveries() {
         return deliveryManagementService.getAllDeliveries();
     }
 
+    /**
+     * Get the information of a delivery
+     * @param
+     * @return A map containing the delivery information, assigned courier and route
+     */
     @GetMapping("/couriers")
     @ResponseBody
     public List<Courier> getAllCouriers() {
@@ -188,6 +229,11 @@ public class MainController {
         return couriers;
     }
 
+    /**
+     * Get the information of a delivery
+     * @param
+     * @return A map containing the delivery information, assigned courier and route
+     */
     @GetMapping("/mapPoints")
     @ResponseBody
     public Map<String, Object> getMapPoints() {
@@ -197,7 +243,14 @@ public class MainController {
         return data;
     }
 
-    // Endpoint pour ajouter une nouvelle livraison
+    /**
+     * Add a new delivery to the system
+     * @param pickupLocation The ID of the pickup location
+     * @param deliveryLocation The ID of the delivery location
+     * @param pickupTime The pickup time
+     * @param deliveryTime The delivery time
+     * @return A map containing the status and message of the operation
+     */
     @PostMapping("/addDelivery")
     @ResponseBody
     public Map<String, String> addDelivery(
@@ -228,6 +281,12 @@ public class MainController {
         return response;
     }
 
+    /**
+     * Update an existing delivery
+     * @param deliveryId The ID of the delivery to update
+     * @param updatedDelivery The updated delivery object
+     * @return A map containing the status and message of the operation
+     */
     @PutMapping("/updateDelivery/{deliveryId}")
     @ResponseBody
     public Map<String, String> updateDelivery(
@@ -246,7 +305,11 @@ public class MainController {
         return response;
     }
 
-    // Endpoint pour supprimer une livraison existante
+    /**
+     * Delete a delivery from the system
+     * @param deliveryId The ID of the delivery to delete
+     * @return A map containing the status and message of the operation
+     */
     @DeleteMapping("/deleteDelivery/{id}")
     @ResponseBody
     public Map<String, String> deleteDelivery(@PathVariable("id") long deliveryId) {
@@ -274,7 +337,10 @@ public class MainController {
         deliveryManagementService.resetData();  // Réinitialiser les données de DeliveryManagementService
     }
 
-
+    /**
+     * Reset the controller data
+     * @return A map containing the status and message of the operation
+     */
     @PostMapping("/resetControllerData")
     @ResponseBody
     public Map<String, String> resetControllerDataRq() {

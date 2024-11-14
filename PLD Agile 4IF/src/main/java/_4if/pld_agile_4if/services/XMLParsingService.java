@@ -20,11 +20,24 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * @description Service to parse XML files
+ */
 @Service
 public class XMLParsingService {
 
+    /**
+     * Default constructor
+     */
     public XMLParsingService() {}
 
+    /**
+     * Parse the city map from an XML file
+     * @param xmlFile XML file
+     * @return City map
+     * @throws JAXBException
+     */
     public CityMap parseCityMap(File xmlFile) throws JAXBException
     {
         try {
@@ -39,6 +52,11 @@ public class XMLParsingService {
     }
 
     // Méthode pour parser l'entrepôt à partir d'un fichier XML
+    /**
+     * Parse the warehouse from an XML file
+     * @param xmlFile XML file
+     * @return Warehouse
+     */
     public Warehouse parseWarehouse(File xmlFile) {
         Warehouse warehouse = null;
 
@@ -69,6 +87,11 @@ public class XMLParsingService {
     }
 
     // Méthode pour convertir la chaîne d'heure au format "8:0:0" en LocalTime
+    /**
+     * Parse the time string to LocalTime
+     * @param timeStr Time string
+     * @return LocalTime
+     */
     private LocalTime parseTime(String timeStr) {
         String[] timeParts = timeStr.split(":");
         int hours = Integer.parseInt(timeParts[0]);
@@ -77,6 +100,12 @@ public class XMLParsingService {
         return LocalTime.of(hours, minutes, seconds);
     }
 
+    /**
+     * Parse the delivery list from an XML file
+     * @param xmlFile XML file
+     * @return List of deliveries
+     * @throws JAXBException
+     */
     public List<Delivery> parseDeliveryList(File xmlFile) throws JAXBException
     {
         List<Delivery> deliveries = new ArrayList<>();
@@ -105,6 +134,11 @@ public class XMLParsingService {
         return deliveries;
     }
 
+    /**
+     * Validate the XML file
+     * @param xmlFile XML file
+     * @return True if the XML file is valid, false otherwise
+     */
     public boolean validateXML(File xmlFile)
     {
         return xmlFile.exists() && xmlFile.isFile();
